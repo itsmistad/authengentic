@@ -1,0 +1,169 @@
+delve	SE	examine
+pivotal	SE	important
+tapestry	SE	(delete)
+vibrant	SE	(delete)
+robust	SE	(give the measurable property)
+intricate	SE	complex
+crucial	SE	important
+realm	SE	area
+groundbreaking	SE	new
+seamless	SE	(delete)
+transformative	SE	(delete)
+testament	SE	(delete)
+leverage	SE	use
+cutting-edge	SE	new
+in conclusion	SE	(delete)
+showcase	SE	show
+foster	SE	help
+furthermore	SE	also
+underscore	SE	show
+synergy	SE	(delete)
+interplay	SE	interaction
+harness	SE	use
+enhance	SE	improve
+elevate	SE	increase
+moreover	SE	also
+streamline	SE	make simpler
+profound	SE	large
+multifaceted	SE	(name the parts)
+landscape	SE	area
+game-changer	SE	(delete)
+unleash	SE	release
+paramount	SE	most important
+nuanced	SE	(delete)
+meticulous	SE	careful
+in order to	SE	to
+holistic	SE	full
+revolutionize	SE	change
+empower	SE	let
+embark	SE	start
+consequently	SE	as a result
+unprecedented	SE	new
+paradigm	SE	model
+innovative	SE	new
+enduring	SE	permanent
+valuable	SE	useful
+unparalleled	SE	(delete)
+remarkable	SE	(delete)
+emphasize	SE	show
+commendable	SE	good
+bustling	SE	busy
+at the end of the day	SE	(delete)
+in summary	SE	(delete)
+due to the fact that	SE	because
+state-of-the-art	SE	new
+renowned	SE	known
+nestled	SE	in
+endeavor	SE	try
+elucidate	SE	explain
+bolster	SE	support
+let's dive in	SE	(delete)
+notably	SE	(delete)
+navigate	SE	go to
+load-bearing	SE	important
+in the heart of	SE	in
+ever-evolving	SE	(delete)
+boast	SE	have
+that being said	SE	but
+notwithstanding	SE	but
+i hope this helps	SE	(delete)
+# --- new (agent-style, humanizer, sepia) ---
+encompass	AS	include
+burgeoning	AS	growing
+keen	AS	strong
+adept	AS	skilled
+uphold	AS	keep
+imperative	AS	necessary
+ponder	AS	consider
+cultivate	AS	build
+hone	AS	sharpen
+embrace	AS	adopt
+pave	AS	(delete, or name the action)
+monumental	AS	large
+scrutinize	AS	examine
+vast	AS	large
+versatile	AS	flexible
+necessitates	AS	requires
+provenance	AS	origin
+nuance	AS	(name the specific difference)
+obliterate	AS	remove
+articulate	AS	state
+acquire	AS	get
+underpin	AS	support
+harmonize	AS	align
+garner	AS	get
+undermine	AS	weaken
+gauge	AS	measure
+facet	AS	part
+game-changing	AS	(delete — say what changes)
+reimagine	AS	redesign
+turnkey	AS	ready to use
+trailblazing	AS	new
+moving the needle	AS	(name the actual metric change)
+push the envelope	AS	(delete, or name the specific advance)
+circle back	AS	return to this
+deep dive	AS	detailed look
+best-in-class	AS	(delete, or give the comparison)
+world-class	AS	(delete, or give the comparison)
+next-generation	AS	new
+novel approach	AS	(name the approach)
+novel framework	AS	(name the framework)
+novel method	AS	(name the method)
+novel optimization	AS	(name the optimization)
+significant step forward	AS	(delete — state the result)
+paradigm-shifting	AS	(delete — say what changed)
+advance the state of the art	AS	(state the specific improvement)
+think outside the box	AS	(delete)
+level playing field	AS	(name the specific condition)
+low-hanging fruit	AS	the easiest fix
+symphony	SP	(delete)
+kaleidoscope	SP	(delete)
+journey	SP	(name the specific process)
+beacon	SP	(delete)
+camaraderie	SP	(name the specific relationship)
+solace	SP	comfort
+resilience	SP	(name the specific behavior)
+myriad	SP	many
+resonate	SP	(say what it does)
+transcend	SP	go beyond
+unravel	SP	explain
+ignite	SP	start
+grapple	SP	work through
+weave	SP	combine
+weaving	SP	combining
+palpable	SP	clear
+fleeting	SP	brief
+unspoken	SP	(name what was not said)
+the weight of	SP	(name the specific burden)
+hung in the air	SP	(delete)
+the air was thick	SP	(delete)
+a constant reminder of	SP	(name what it reminds of)
+in a world of	SP	(delete — state the fact)
+in a world where	SP	(delete — state the fact)
+cautionary tale	SP	(state the specific lesson)
+amidst	SP	during
+align with	HZ	match
+gate	HZ	(name the specific restriction — check technical usage first)
+highlight	HZ	show
+key	HZ	important
+quietly	HZ	(delete unless literal)
+stands as	HZ	is
+serves as	HZ	is
+is a testament	HZ	shows
+vital	HZ	important
+underscores its importance	HZ	(state why it matters, specifically)
+symbolizing	HZ	(delete, or state the fact directly)
+marking the	HZ	(delete, or state the fact directly)
+key turning point	HZ	(name the specific change)
+evolving landscape	HZ	(name the specific change)
+focal point	HZ	center
+indelible mark	HZ	(name the specific effect)
+deeply rooted	HZ	established
+rich (figurative)	HZ	(delete, or name the specific detail)
+enhancing its	HZ	improving its
+exemplifies	HZ	shows
+commitment to	HZ	(state the specific action)
+natural beauty	HZ	(name the specific feature)
+breathtaking	HZ	(delete, or name the specific feature)
+must-visit	HZ	(delete)
+stunning	HZ	(delete, or name the specific feature)
