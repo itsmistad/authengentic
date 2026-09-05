@@ -1,0 +1,32 @@
+{
+  "name": "authengentic",
+  "version": "1.0.0",
+  "description": "Write plain, human-sounding technical and professional prose: merges SimpleEnglish's ASD-STE100 discipline with agent-style, humanizer, and sepia's AI-tell catalogs into one non-fiction ruleset.",
+  "author": {
+    "name": "dj.williamson"
+  },
+  "license": "MIT",
+  "keywords": [
+    "technical-writing",
+    "documentation",
+    "ai-detection",
+    "prose",
+    "style"
+  ],
+  "skills": "./skills/",
+  "hooks": "./hooks/hooks.json",
+  "interface": {
+    "displayName": "Authengentic",
+    "shortDescription": "Write clear, human-sounding technical prose.",
+    "longDescription": "Load the merged authengentic writing rules automatically for documentation, procedures, error messages, runbooks, release notes, PR/issue replies, postmortems, tickets, and technical articles.",
+    "developerName": "dj.williamson",
+    "category": "Productivity",
+    "capabilities": ["Write"],
+    "defaultPrompt": [
+      "Rewrite this technical text with authengentic.",
+      "Write this release note with authengentic.",
+      "Check this document for authengentic violations."
+    ],
+    "brandColor": "#2563EB"
+  }
+}

@@ -1,0 +1,55 @@
+{
+  "name": "authengentic",
+  "displayName": "Authengentic",
+  "description": "Write plain, human-sounding technical and professional prose: merges SimpleEnglish's ASD-STE100 discipline with agent-style, humanizer, and sepia's AI-tell catalogs into one non-fiction ruleset.",
+  "version": "1.0.0",
+  "author": {
+    "name": "dj.williamson"
+  },
+  "license": "MIT",
+  "keywords": [
+    "technical-writing",
+    "documentation",
+    "ai-detection",
+    "prose",
+    "style"
+  ],
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/src/hooks/authengentic-activate.js\"",
+            "timeout": 5,
+            "statusMessage": "Loading authengentic..."
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/src/hooks/lint_hook.py\"",
+            "timeout": 10,
+            "statusMessage": "authengentic: checking the file..."
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/src/hooks/lint_hook.py\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}

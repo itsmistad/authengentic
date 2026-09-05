@@ -1,0 +1,21 @@
+{
+  "name": "authengentic",
+  "owner": {
+    "name": "dj.williamson"
+  },
+  "description": "Merged AI-writing-style skill for clear, human-sounding technical and professional prose.",
+  "plugins": [
+    {
+      "name": "authengentic",
+      "source": "./",
+      "displayName": "Authengentic",
+      "description": "Write plain, human-sounding technical and professional prose: merges SimpleEnglish's ASD-STE100 discipline with agent-style, humanizer, and sepia's AI-tell catalogs into one non-fiction ruleset.",
+      "version": "1.0.0",
+      "author": {
+        "name": "dj.williamson"
+      },
+      "license": "MIT",
+      "keywords": ["technical-writing", "documentation", "ai-detection", "prose", "style"]
+    }
+  ]
+}

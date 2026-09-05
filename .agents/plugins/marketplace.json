@@ -1,0 +1,16 @@
+{
+  "name": "authengentic",
+  "interface": {
+    "displayName": "Authengentic"
+  },
+  "plugins": [
+    {
+      "name": "authengentic",
+      "source": {
+        "source": "local",
+        "path": "./"
+      },
+      "category": "Productivity"
+    }
+  ]
+}
