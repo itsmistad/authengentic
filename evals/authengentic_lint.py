@@ -43,7 +43,9 @@ EMOJI = re.compile(
     "\U0001F1E6-\U0001F1FF"
     "]"
 )
-BOLD_MINI_HEADING = re.compile(r"^\s*[-*]\s+\*\*[^*]+\*\*:", re.M)
+BOLD_MINI_HEADING = re.compile(
+    r"^\s*[-*]\s+\*\*[^*]+:\*\*|^\s*[-*]\s+\*\*[^*]+\*\*:", re.M
+)
 _TRANSITION_OPENERS = ("Additionally", "Furthermore", "Moreover", "In addition", "What's more", "Notably")
 _TRANSITION_RE = re.compile(
     r"(?:^|[.!?]\s+)(" + "|".join(re.escape(t) for t in _TRANSITION_OPENERS) + r")\b",
@@ -282,6 +284,20 @@ Some text under the heading."""
 
 TRANSITION_FIXTURE = """The service retries automatically. Additionally, it logs every attempt. Furthermore, it alerts on the third failure. Moreover, the alert includes the request ID."""
 
+CURLY_QUOTE_FIXTURE = """She said, “this works.” Then she left."""
+
+BOLD_MINI_HEADING_FIXTURE = """- **User Experience:** improved significantly this quarter."""
+
+EMOJI_FIXTURE = """## 🚀 Launch
+
+We shipped the update today."""
+
+FILTER_WORD_FIXTURE = """She felt nervous as the deadline approached."""
+
+# A non-conditional repeat must fire (contrast with CLEAN_FIXTURE's "If X. If Y."
+# exemption, which must not).
+REPEAT_START_FIXTURE = """She noted the door. She noted the lock."""
+
 
 def self_test():
     slop = lint(SLOP_FIXTURE, "procedural")
@@ -292,6 +308,11 @@ def self_test():
     title_case = lint(TITLE_CASE_FIXTURE, "descriptive")
     sentence_case = lint(SENTENCE_CASE_FIXTURE, "descriptive")
     transitions = lint(TRANSITION_FIXTURE, "descriptive")
+    curly = lint(CURLY_QUOTE_FIXTURE, "descriptive")
+    bold_heading = lint(BOLD_MINI_HEADING_FIXTURE, "descriptive")
+    emoji = lint(EMOJI_FIXTURE, "descriptive")
+    filter_word = lint(FILTER_WORD_FIXTURE, "descriptive")
+    repeat_start = lint(REPEAT_START_FIXTURE, "descriptive")
 
     assert "contraction" not in slop["violations"], "contraction key must not exist (contradiction 1)"
     assert slop["violations"]["sentence_over_limit"] >= 1, slop
@@ -325,9 +346,21 @@ def self_test():
 
     assert transitions["violations"]["transition_opener"] >= 2, transitions
 
+    assert curly["violations"]["curly_quote"] >= 1, curly
+    assert bold_heading["violations"]["bold_mini_heading"] >= 1, bold_heading
+    assert emoji["violations"]["emoji_decoration"] >= 1, emoji
+    assert filter_word["violations"]["filter_word"] >= 1, filter_word
+    assert repeat_start["violations"]["consecutive_same_start"] >= 1, (
+        f"a genuine non-conditional repeat must fire: {repeat_start}"
+    )
+    assert clean["violations"]["consecutive_same_start"] == 0, (
+        f"the 'If X. If Y.' conditional exemption must still hold: {clean}"
+    )
+
     print(
         "self-test OK:", slop["violations_total"], "violations in slop fixture, 0 in clean, "
-        "0 in contractions fixture, dash cumulative + title-case + transition checks pass",
+        "0 in contractions fixture, dash cumulative + title-case + transition checks pass, "
+        "curly-quote + bold-mini-heading + emoji + filter-word + consecutive-same-start checks pass",
     )
 
 
