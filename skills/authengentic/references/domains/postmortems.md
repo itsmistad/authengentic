@@ -1,6 +1,6 @@
 # Domain — incident postmortems
 
-Covers incident reports, outage retrospectives, RCA documents. Run with `SKILL.md` (article-like weighting: relevance, density, stance) plus the outline test in SKILL.md Section 10 (Structure and argument).
+Covers incident reports, outage retrospectives, RCA documents. Run with `SKILL.md` (article-like weighting: relevance, density, stance) plus the outline test in Rules 6.7 and 10.7.
 
 ## Human baseline
 

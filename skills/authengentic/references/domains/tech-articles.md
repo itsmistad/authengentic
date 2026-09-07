@@ -1,6 +1,6 @@
 # Domain — technical articles and blog posts
 
-Covers engineering blog posts, tutorials, architecture write-ups, experience reports. The richest domain: run `SKILL.md` (article-like weighting), the outline and QUD checks in SKILL.md Section 10 (Structure and argument), and `references/ai-tells.md` (skip its fiction-slop table).
+Covers engineering blog posts, tutorials, architecture write-ups, experience reports. The richest domain: run `SKILL.md` (article-like weighting), the outline test in Rules 6.7 and 10.7, and `references/ai-tells.md`.
 
 ## Human baseline
 
@@ -26,5 +26,5 @@ Motivated by a real problem the author actually hit. Uneven by design — deep w
 2. One opinion minimum, stated as yours, with the disagreement condition ("if your writes are under 1k/s, ignore all of this").
 3. Depth budget by interest, not symmetry: the section that surprised you gets 5x the words of the setup steps.
 4. Numbers carry conditions, claims carry links, code carries a "this runs" guarantee or a disclaimer.
-5. QUD check: if the section-question sequence reads *what is X, why X matters, how to X, conclusion*, restructure around what actually happened.
+5. Outline check (Rules 6.7 and 10.7): if the section-question sequence reads *what is X, why X matters, how to X, conclusion*, restructure around what actually happened.
 6. Voice: first person, contractions, an aside or two. The measured human markers (stance, unevenness, lived specifics) are the same ones expert readers use to judge "a person wrote this."
