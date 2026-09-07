@@ -57,7 +57,7 @@ Cite only rule numbers that exist in this file. Do not cite rule numbers from me
 | Operation | Contract |
 |---|---|
 | **write** | New content. Read the domain file in `references/domains/` *before* drafting. Register and structure decisions come first. You cannot retrofit them cheaply. |
-| **review** | Diagnose only. Produce the defect list and stop. Each finding gives the rule number, the offending text, and a compliant rewrite. Change nothing until the user asks. Read `references/ai-tells.md` and run `references/checklist.md` for this operation. |
+| **review** | Diagnose only. Produce the defect list and stop. Each finding gives the rule number, the offending text, and a compliant rewrite. Change nothing until the user asks. Read `references/ai-tells.md` and run `references/checklist.md` for this operation. If you know which model produced the text or which model you are, check `references/model-fingerprints.md` for that family's prose-layer defaults and scan the draft against them. |
 | **refactor** | Minimal in-place revision that keeps the structure, the voice, and the intent. Two stages, in this order: write the full defect list first, then fix it item by item, deepest layer first (structure, then sentences, then words). Skew hard toward replace and delete over insert. |
 | **recreate** | Full rewrite. Extract the facts, the claims, and the intent of the original into a bare list. Check that list against the source: nothing invented, nothing dropped. Then write fresh under the domain rules. Use it when the defects are structural and the text is short enough that surgery costs more than a rebuild. |
 
