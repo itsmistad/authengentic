@@ -4,10 +4,11 @@ The condensed version lives in SKILL.md's "Signs of AI writing" section. This fi
 catalog for a `review` operation or a deep audit. Every entry names the tell, the words and phrases
 to watch, why a language model produces it, and a before/after pair.
 
-Sources: Wikipedia's "Signs of AI writing" (carried through humanizer), agent-style's field-observed
-rules RULE-A, RULE-C, RULE-D, RULE-E, and RULE-H, and sepia's professional-pass checklist with its
-style-pass vocabulary, syntax, and rhythm tables. Non-fiction scope only: fiction-specific tells
-(scene vocabulary, narrative architecture) are left out.
+Sources: Wikipedia's "Signs of AI writing" (carried through humanizer); agent-style's rules — the
+field-observed RULE-A, RULE-C, RULE-D, RULE-E, RULE-G, and RULE-H, plus canonical RULE-07 on
+positive-form statements; and sepia's professional-pass checklist with its style-pass vocabulary,
+syntax, and rhythm tables. Non-fiction scope only: fiction-specific tells (scene vocabulary,
+narrative architecture) are left out.
 
 **How the numbering maps to SKILL.md.** Entries #1 through #9 mirror, in order, the nine "Signs of AI
 writing" directions in SKILL.md: inflated significance, negative parallelism, rule of three, vague
@@ -667,7 +668,8 @@ Cross-ref: Rule 9.7.
 
 **Watch for:** a word used slightly off its meaning or register; "seem to" plus a verb where the
 verb alone is meant and no uncertainty is real; an unclear pronoun; a passive where an actor exists.
-This is the artifact professional editors fix most often (sepia style-pass §1, 28% of edits).
+In the professional-editor taxonomy sepia cites, this is the single largest category of fixes at 28%
+(sepia style-pass §1, artifact 1).
 
 **Why it happens:** the model picks a word that is close to right and fits the sentence rhythm, not
 the exact word.
@@ -681,8 +683,8 @@ uncertainty is genuine and worth stating.
 ## #37 Run-on sentence structure
 
 **Watch for:** two or more independent thoughts joined into one long sentence with commas and "and";
-a sentence that carries a main claim plus three qualifications inline. This is sepia style-pass §1,
-artifact 2 (20% of edits).
+a sentence that carries a main claim plus three qualifications inline. This is artifact 2 in the
+same taxonomy, "poor sentence structure", at 20% of fixes (sepia style-pass §1).
 
 **Why it happens:** next-token generation rewards continuing a well-formed sentence over stopping and
 starting a new one.
@@ -698,7 +700,10 @@ misconfigured priority setting had blocked promotion.
 
 **Watch for:** the shape "[main clause], [trailing participial phrase that restates the main
 clause]": "The scheduler retries three times, providing resilience against transient failures." This
-is sepia style-pass §1, artifact 3 (18% of edits), and it runs up to five times the human rate.
+is artifact 3 in the taxonomy, "redundant exposition", at 18% of fixes (sepia style-pass §1).
+Participial clauses of this kind are among the part-of-speech shapes sepia reports as 2 to 5 times
+overrepresented in machine prose against human prose, the participial row specifically at up to five
+times (sepia style-pass §2).
 
 **Why it happens:** the model adds a clause that re-expresses the fact in more abstract terms, which
 feels like completion.
