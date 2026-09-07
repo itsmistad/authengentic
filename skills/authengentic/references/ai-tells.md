@@ -731,7 +731,7 @@ professional-pass whitelist.
 |---|---|
 | Clean grammar and correct punctuation | Plenty of people write cleanly. Injecting typos to look human is a detectable gimmick. |
 | A single, correctly-placed em-dash | Not a violation and not evidence of AI. Dashes are the one cumulative rule in authengentic: only a cluster counts. See the note on clusters below. |
-| One semicolon, one "delve", one "however" in isolation | Not by itself proof a machine wrote the text; the authorship tell is density, not the lone instance. But authengentic still fixes each on the first hit (Rule 8.1 for the semicolon, Rule 1.15 for the slop word; "Where authengentic differs from its sources" item 4). This row is about authorship evidence, not about which rules apply. |
+| One semicolon, one "delve", one "however" in isolation | Not by itself proof a machine wrote the text. The authorship tell is density, not the lone instance. But authengentic still fixes each on the first hit (Rule 8.1 for the semicolon, Rule 1.15 for the slop word, per "Where authengentic differs from its sources" item 4). This row is about authorship evidence, not about which rules apply. |
 | Curly quotes on their own | Most editors and word processors auto-curl. Weak signal alone. |
 | A formal register in a formal venue | Register match beats forced casualness. A grant proposal is allowed to sound like one. |
 | One short sentence for emphasis | Human, when it carries a new fact. The tell is the closer that repeats (#21). |

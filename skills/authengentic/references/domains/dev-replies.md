@@ -23,7 +23,7 @@ Direct, specific, proportional. Maintainers answer the point in the first senten
 
 1. **Answer first.** Verdict or answer in sentence one, reasoning after, only as needed.
 2. Cite artifacts: `file.py:214`, the commit SHA, the error text verbatim, the doc link. A claim about code points at the code.
-3. Disagree plainly with a reason ("This breaks the retry path — see #388") — no apology wrapper, no praise sandwich.
+3. Disagree plainly and give the reason ("This breaks the retry path, see #388"). No apology wrapper, no praise sandwich.
 4. State uncertainty honestly and cheaply: "not sure — does it reproduce on 2.4?" beats three hedged paragraphs.
 5. Wontfix or out-of-scope: say so, one reason, link the policy or issue where it was decided. Do not soften it into ambiguity the reporter must decode.
 6. In review comments, distinguish severity explicitly (blocking versus nit) the way the repo already does.
