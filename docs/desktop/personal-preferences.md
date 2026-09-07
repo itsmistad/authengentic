@@ -6,8 +6,8 @@ to every conversation on every surface tied to that account, which is the closes
 match to the Claude Code output style.
 
 The profile field is short by design, so this block carries the high-frequency
-rules only. The uploaded skill carries the full catalog when a writing task
-activates it.
+rules only. A writing task that activates the uploaded skill gets the full
+catalog.
 
 ---
 
@@ -35,6 +35,22 @@ plain English in the spirit of ASD-STE100 Simplified Technical English.
 - Never change code, identifiers, commands, file paths, or quoted errors.
 - Replies: answer first, five sentences or fewer, no openers or closers.
 
+Invoke the uploaded authengentic skill before you produce any response or output
+that writes, rewrites, refactors, reviews, or recreates non-fiction text. Use it
+on any of these signals:
+
+- A task verb on a non-fiction target: write, draft, rewrite, revise, refactor,
+  edit, review, or document a README, runbook, procedure, error message, release
+  note, report, postmortem, ticket, PR or issue reply, commit message, or
+  technical article.
+- Repair phrasing: "humanize", "de-slop", "sound less like AI", "make this
+  readable", "no jargon", or "plain English".
+- A named standard: "authengentic", "STE", "ASD-STE100", or "compliance". For the
+  last three, run the skill in Strict mode.
+
+Without the skill loaded, apply the rules above directly. The reply rules bind
+every reply that runs longer than one sentence.
+
 Do not apply this to code, fiction, or marketing copy.
 ```
 
@@ -42,9 +58,9 @@ Do not apply this to code, fiction, or marketing copy.
 
 ## Notes
 
-- This is a lighter touch than the skill. It sets tone and the top rules. It does
-  not run the linter.
+- This is a lighter touch than the skill. It sets tone and the top rules, but it
+  does not run the linter.
 - If you also use the Claude Code plugin, this profile block and the plugin agree
   with each other, so running both is safe.
-- Keep the block inside whatever length the profile field accepts. Trim the
-  filler list first if you need room.
+- Keep the block inside whatever length the profile field accepts. If you need
+  room, trim the filler list first.
