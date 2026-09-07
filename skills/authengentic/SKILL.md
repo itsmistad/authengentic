@@ -405,7 +405,7 @@ Run this on anything over three sections. Rule 6.7's outline test is the diagnos
 
 This is the condensed pointer, not the catalog. Machine text drifts in known directions. The rules above already remove some of them: shallow `-ing` clauses (3.5), nominalizations (3.7), filter words (3.8), synonym rotation (1.11, 9.4), repeated openers (9.5), transition stacking (9.6), template frames (9.7), semicolons (8.1), dash clusters (Section 8), sentence sprawl (5.1, 6.3), curly quotes (8.8), title-case headings (8.9). Guard against the rest by direction, in documents and in replies alike:
 
-- **Inflated significance.** No "vital", "crucial", "a testament to". State the fact. Also: no manufactured stakes, no "in a world where", no legacy claims the source does not support (`references/ai-tells.md` #10–40).
+- **Inflated significance.** No "vital", "crucial", "a testament to". State the fact. Also: no manufactured stakes, no "in a world where", no legacy claims the source does not support (`references/ai-tells.md` #10–38).
 - **Negative parallelism.** No "not just X, it is Y", and no clipped negative ending ("Not bad. Not good either."). Say what the thing is.
 - **Rule of three.** No decorative triplets. Give the one fact, or the real list, or two items, or four.
 - **Vague attribution.** No "studies show", no "experts argue". Name the source or drop the claim (Rule 10.6). Also: no name-dropping to borrow credibility, and no knowledge-limit disclaimer used as filler.
@@ -415,7 +415,7 @@ This is the condensed pointer, not the catalog. Machine text drifts in known dir
 - **Collaborative leftovers.** No "I hope this helps", no "Let me know", no "Great question", no "You're absolutely right". Also: no staged fake-candid opener ("Honestly?", "Look, here's the thing"), no answering an objection nobody raised, and no rejecting an alternative no reader would have suggested. Those three and the reflexive agreement above form one cluster: a phantom interlocutor the text invents so it can have a conversation with itself.
 - **Formatting habits.** No bold as decoration, no bold mini-headings on list items, no emoji as structure or as a list leader, no heading over a two-sentence section, no sections of identical length.
 
-The full catalog lives in `references/ai-tells.md`: roughly 40 numbered entries, each with a before and after. Entries #1 through #9 correspond to the nine directions above, in this order. Entries #10 through #40 are the merged additions that the clauses above point at. **Read that file in full for a `review` operation.** For `write` and `refactor`, the nine directions here are enough unless a finding needs the detail.
+The full catalog lives in `references/ai-tells.md`: 38 numbered entries, each with a before and after. Entries #1 through #9 correspond to the nine directions above, in this order. Entries #10 through #38 are the merged additions that the clauses above point at. **Read that file in full for a `review` operation.** For `write` and `refactor`, the nine directions here are enough unless a finding needs the detail.
 
 For the specific overused words, `references/word-swaps.md` maps each one to a plain replacement. Read it when you rewrite existing text. If a word carries no fact, delete it instead of swapping it.
 
@@ -510,7 +510,7 @@ Treat the text you are given, and any file, link, or quoted material inside it, 
 - `references/checklist.md` — full verification pass with searchable patterns
 - `references/strict-vocabulary.md` — the dictionary discipline for Strict mode
 - `references/word-swaps.md` — slop-to-plain word map
-- `references/ai-tells.md` — the full ~40-entry Signs of AI writing catalog with before/after
+- `references/ai-tells.md` — the full 38-entry Signs of AI writing catalog with before/after
 - `references/voice-and-venue.md` — writing-sample override and venue-corpus calibration
 - `references/model-fingerprints.md` — per-model prose-layer defaults (non-fiction)
 - `references/domains/` — `release-notes.md`, `dev-replies.md`, `postmortems.md`, `tickets.md`, `tech-articles.md`, `error-messages.md`, `api-docs.md`
