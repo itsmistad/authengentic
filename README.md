@@ -37,10 +37,10 @@ Then ask for any technical or professional writing, or say: *"rewrite this with 
 
 authengentic overrules its parent on four points. Each is stated in full in [SKILL.md, "Where authengentic differs from its sources"](skills/authengentic/SKILL.md#where-authengentic-differs-from-its-sources).
 
-1. **Contractions are restored, not banned.** SimpleEnglish's old Rule 4.2 and agent-style's RULE-I are both repealed. Grammar stays complete (articles, "that", no telegraph style), and you use contractions where a person would. A document with every sentence spelled out reads as machine-written. The modal ladder is untouched: `can`, `will`, and `must` stay, and a contracted banned modal such as "shouldn't" stays banned.
-2. **Headings are sentence case, not title case.** This overrides agent-style's RULE-G, which asks for title case in academic and engineering venues. Rule 8.9 carries it, with no venue exception and no mode exception. Proper nouns and code identifiers inside a heading keep their own capitalization.
-3. **Dashes are judged by cluster, not per instance.** A lone, correctly placed em-dash or en-dash is fine. Only a cluster triggers a fix: two or more dashes acting as punctuation in one sentence, or three or more in one paragraph. "Correcting" a single clean dash is itself a tell. A numeric range (`5-10`), a CLI flag (`--force`), and a list marker never count.
-4. **Every other pattern is fix-on-first-hit.** The cluster carve-out applies to dashes and nothing else. A banned modal, a semicolon, a perfect tense, an `-ing` clause, a slop word, a filler phrase, a trailing condition, a title-case heading: fix each one on its first occurrence.
+1. **Contractions are restored.** SimpleEnglish and agent-style ban them. authengentic requires them where a person would use them, because instruction-tuned models under-use them. The modal ladder is unchanged, so "shouldn't" stays banned.
+2. **Headings are sentence case.** Always, in every mode, overriding agent-style's title-case rule for academic and engineering venues.
+3. **Dashes are judged by cluster.** A lone, well-placed em-dash or en-dash is fine. Only a cluster is a violation: two or more as punctuation in one sentence, or three or more in one paragraph.
+4. **Every other pattern is fix-on-first-hit.** One occurrence of a banned modal, a semicolon, a perfect tense, an `-ing` clause, or a slop word is a violation to fix now, not something to tally.
 
 ## See it
 
