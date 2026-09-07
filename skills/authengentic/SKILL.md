@@ -232,7 +232,7 @@ The contraction half is new, and it reverses this skill's parent. Read "Where au
 **Before:** You do not need a configuration file. It is created for you on first run, and it is safe to delete.
 **After:** You don't need a configuration file. It's created on first run, and it's safe to delete.
 
-**Rule 4.1 in detail: split and vary.** Split any sentence over 30 words, and over the 20/25-word limits of Rules 5.1 and 6.3, whichever binds first. Then look at the paragraph as a whole. Five sentences of similar length in a row read as a flat surface, and the points that were meant to land do not. The spread of sentence lengths inside a paragraph is measurably narrower in machine prose than in human prose. Break a run of three or more same-length sentences by moving words, never by adding them: split one long sentence, merge two short ones, or delete a clause.
+**Rule 4.1 in detail: split and vary.** Split any sentence over 30 words, and over the 20/25-word limits of Rules 5.1 and 6.3, whichever binds first. Then look at the paragraph as a whole. Three or more sentences of similar length in a row read as a flat surface, and the points that were meant to land do not. The spread of sentence lengths inside a paragraph is measurably narrower in machine prose than in human prose. Break a run of three or more same-length sentences by moving words, never by adding them: split one long sentence, merge two short ones, or delete a clause.
 
 **Before (four sentences, all about 22 words):** The ingestion pipeline processes incoming records in batches of one thousand items and stores them in the primary document store. Each batch is processed by the ingest worker, which runs on a schedule of every five minutes. The document store maintains an index on the timestamp field, which enables range queries. Query performance is acceptable for batch sizes up to fifty thousand records per minute.
 **After (8 + 22 + 12 + 8 words):** The ingest worker handles records in batches. Every five minutes it pulls up to a thousand records and writes them to the primary document store. The store keeps a timestamp index for range queries. At fifty thousand records per minute, performance holds.
@@ -328,8 +328,8 @@ General recommendations: keep "that" (GR-1), primary verb first and the tool aft
 
 **Rule 9.4 in detail: no drift, no redefinition.** One entity, one name, for the whole document. Do not alternate "large language model", "LLM", "language model", and "foundation model" for the same thing. Do not expand an abbreviation a second time: if `RAG` was defined in the introduction, section 3 writes `RAG`, not "retrieval-augmented generation" again. A varied term makes the reader stop and check whether it names something new.
 
-**Before:** The protagonist faces many challenges. The main character must overcome obstacles. The central figure eventually triumphs.
-**After:** The protagonist faces many challenges but eventually triumphs.
+**Before:** The large language model drafts the summary. The foundation model then revises it. The neural model returns the final text.
+**After:** The large language model drafts the summary, revises it, and returns the final text.
 
 **Rule 9.5 in detail.** Two adjacent sentences with the same first word is the flag, not three. `The ... The ...`, `This ... This ...`, `We ... We ...`, and `It ... It ...` are the usual offenders. Fix the pattern, not the word: merge the sentences, move the new information into the subject, or open with the action. The surviving sentence may still start with "The".
 
@@ -466,7 +466,7 @@ The reply is Plain mode, in every mode: 25 words per sentence, simple tenses, ac
 This step is not optional. Run these eight checks (checks 1-5 and 7-8 on your draft, check 6 on your reply):
 
 1. Count words in your three longest sentences. Over the 20/25 limit → split them. Then scan each paragraph for a run of three or more sentences of about the same length, and break it (Rule 4.1).
-2. Search your draft for: `has been`, `have been`, `should`, `shall`, `may`, `might`, `could`, `however`, `therefore`, `-ing` verbs after a comma, semicolons, curly quotes, and title-case headings. Fix each hit on the first occurrence. Then read the draft back: are there contractions where a person would naturally use one? If every sentence is fully spelled out, that is itself a sign, and you fix it by putting the contractions in.
+2. Search your draft for: `has been`, `have been`, `should`, `would`, `shall`, `may`, `might`, `could`, `however`, `therefore`, `-ing` verbs after a comma, semicolons, curly quotes, and title-case headings. Fix each hit on the first occurrence. Then read the draft back: are there contractions where a person would naturally use one? If every sentence is fully spelled out, that is itself a sign, and you fix it by putting the contractions in.
 3. Search for every `if` and `when`. Each one stands at the START of its sentence, before the command. "Increase the timeout if the network is slow" → "If the network is slow, increase the timeout."
 4. Search for check, verify, confirm, ensure, and validate as verbs, and for config, settings, and options. Replace each hit with `make sure that` or `configuration`. Strict mode: route the rest with `references/strict-vocabulary.md`.
 5. Check each vertical list: colon on the lead-in, items start with an uppercase letter, no comma or semicolon at the end of an item, no procedural and descriptive items mixed, and every item in the same grammatical form (Rule 10.2).

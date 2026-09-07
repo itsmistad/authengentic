@@ -52,6 +52,13 @@ _TRANSITION_RE = re.compile(
 )
 
 
+"""Slop terms that must match as an exact word, with no trailing-letter
+wildcard. "key" and "gate" are common technical words (keyword, keyboard,
+keys; gateway); the `\\w*` suffix the other terms carry would drag those
+in as false positives."""
+_SLOP_EXACT_TERMS = frozenset({"key", "gate"})
+
+
 def slop_pattern():
     """Union of the measured core list and evals/slop.tsv (term, source, swap).
 
@@ -65,7 +72,10 @@ def slop_pattern():
                 continue
             term = line.split("\t")[0].strip().lower()
             if term:
-                terms.append(re.escape(term).replace(r"\ ", r"\s+") + r"\w*")
+                pattern = re.escape(term).replace(r"\ ", r"\s+")
+                if term not in _SLOP_EXACT_TERMS:
+                    pattern += r"\w*"
+                terms.append(pattern)
     if not terms:
         return SLOP_CORE
     return re.compile(SLOP_CORE.pattern[:-len(r")\b")] + "|" + "|".join(terms) + r")\b", re.I)
@@ -91,57 +101,105 @@ def strip_code(text):
     return text
 
 
-def strip_code_keep_headings(text):
-    """Like strip_code, but leaves ATX headings (#...) intact for the
-    heading-case and consecutive-same-start passes, which need them."""
-    text = re.sub(r"```.*?```", " ", text, flags=re.S)
-    text = re.sub(r"`[^`\n]+`", " CODESPAN ", text)
-    text = re.sub(r"https?://\S+", " URL ", text)
-    return text
-
-
 def sentences(text):
+    """Split prose into sentence-ish units.
+
+    Markdown table rows (a line whose first non-space character is `|`,
+    including the `|---|` separator) are dropped first: a table is not
+    prose, and leaving the pipes in turns a whole table into two or three
+    giant "sentences" that trip `sentence_over_limit`.
+    """
+    lines = [ln for ln in text.splitlines() if not re.match(r"^\s*\|", ln)]
+    text = "\n".join(lines)
     text = re.sub(r"^\s*([-*]|\d+\.)\s+", "", text, flags=re.M)  # list markers
     parts = re.split(r"(?<=[.!?:])\s+", text)
     return [p.strip() for p in parts if len(p.strip().split()) >= 2]
 
 
+_LIST_OR_ROW = re.compile(r"^\s*(?:[-*+]\s|\d+[.)]\s|\|)")
+
+
+def paragraph_units(text):
+    """Split text into the units the two cumulative checks count within.
+
+    A blank line ends a unit, as in the plain "paragraph = blank-line
+    block" model. On top of that, each Markdown list item (`- `, `* `,
+    `1. `) and each table row (`| ... |`) is its own unit. Without this,
+    a six-item list or a three-row table where every item carries one
+    lone, correct dash trips the ">=3 dashes in one paragraph" threshold
+    (contradiction 3), and adjacent table rows with the same first cell
+    trip `consecutive_same_start`.
+    """
+    units = []
+    buf = []
+
+    def flush():
+        if buf:
+            units.append("\n".join(buf))
+            buf.clear()
+
+    for line in text.splitlines():
+        if not line.strip():
+            flush()
+            continue
+        if _LIST_OR_ROW.match(line):
+            flush()
+            units.append(line)
+        else:
+            buf.append(line)
+    flush()
+    return units
+
+
 def _rule_title_case_heading(text):
     """Flag a Markdown heading that IS title case (sentence case wanted).
 
-    Signal comes only from non-first "content" words (skipping the first
-    word, which is capitalized in both styles, and skipping function
-    words like "with"/"the", which stay lowercase in both styles). An
-    all-caps acronym (e.g. "API") is also excluded from the signal: it is
-    capitalized under either style, so it cannot tell title case from
-    sentence case — counting it as generic evidence of capitalization is
-    what makes a sentence-case heading ending in an acronym look like
-    title case. Title case is declared only when every remaining content
-    word is capitalized, and at least one such word exists.
+    The signal comes from non-first, non-phrase-initial "content" words.
+    Three exclusions keep proper-noun and structured headings clean:
+
+      * The first word of the heading is capitalized in both styles.
+      * A phrase boundary (an em-dash, an opening paren, or a colon)
+        starts a new phrase, and the first word after it is capitalized
+        in both styles too. So "Words" in "Section 1 — Words (Rules ...)"
+        and "Rules" after "(" are treated as phrase-initial, not as
+        title-case evidence.
+      * An all-caps acronym ("API") is capitalized under either style.
+      * A lowercase function word ("with", "to", "the") is lowercase
+        under either style, so it carries no signal; a *capitalized*
+        function word ("With", "The") is abnormal and does count.
+
+    Title case is declared only when at least two such words survive and
+    every one of them is capitalized. A single trailing proper noun
+    ("Working with Docker", "Deploy to Kubernetes", "Install Postgres")
+    is one word, not two, so it never trips the check.
     """
     hits = 0
     for line in text.splitlines():
         m = re.match(r"^\s*(#{1,6})\s+(.*?)\s*#*\s*$", line)
         if not m:
             continue
-        heading = m.group(2).strip()
-        heading = re.sub(r"`[^`]*`", "", heading)
-        words = re.findall(r"[A-Za-z][A-Za-z'-]*", heading)
-        if len(words) < 2:
+        heading = re.sub(r"`[^`]*`", "", m.group(2).strip())
+        content_words = []
+        for segment in re.split(r"[—():]", heading):
+            words = re.findall(r"[A-Za-z][A-Za-z'-]*", segment)
+            for w in words[1:]:  # drop the phrase-initial word of each segment
+                if w.isupper():
+                    continue  # acronym: no signal
+                if w.lower() in _LC_WORDS and not w[0].isupper():
+                    continue  # lowercase function word: no signal
+                content_words.append(w)
+        if len(content_words) < 2:
             continue
-        content_words = [
-            w for w in words[1:]
-            if w.lower() not in _LC_WORDS and not w.isupper()
-        ]
-        if not content_words:
-            continue
-        capitalized_content = sum(1 for w in content_words if w[0].isupper())
-        if capitalized_content == len(content_words):
+        if all(w[0].isupper() for w in content_words):
             hits += 1
     return hits
 
 
 _CONDITIONAL_STARTS = frozenset({"if", "when"})
+# Placeholders `strip_code` leaves behind. They are not real words, so
+# two rows whose first cell is inline code (both -> "CODESPAN") are not a
+# genuine repeated opener.
+_PLACEHOLDER_FIRST = frozenset({"codespan", "url"})
 
 
 def _rule_consecutive_same_start(text):
@@ -150,14 +208,18 @@ def _rule_consecutive_same_start(text):
     Conditional openers ("If X. If Y.") are excluded: back-to-back
     conditionals are a normal procedural-writing pattern (a list of cases),
     not the LLM tic ("This enables. This allows.") this rule targets.
+
+    Each list item and table row is its own paragraph unit (see
+    `paragraph_units`), so a first-word repeat is only counted within one
+    item or row, never across the rows of a table.
     """
     hits = 0
-    for para in re.split(r"\n\s*\n", text):
+    for para in paragraph_units(text):
         sents = sentences(para)
         prev_first = None
         for s in sents:
             words = re.findall(r"[A-Za-z']+", s)
-            if not words:
+            if not words or words[0].lower() in _PLACEHOLDER_FIRST:
                 prev_first = None
                 continue
             first = words[0].lower()
@@ -188,7 +250,7 @@ def _rule_em_dash_cumulative(text):
     paragraph. A lone dash anywhere produces zero violations.
     """
     hits = 0
-    for para in re.split(r"\n\s*\n", text):
+    for para in paragraph_units(text):
         para_total = len(DASH.findall(para))
         if para_total >= 3:
             hits += para_total
@@ -200,9 +262,27 @@ def _rule_em_dash_cumulative(text):
     return hits
 
 
+def _rule_emoji_decoration(text):
+    """Flag an emoji only where the spec means "decoration": in a heading
+    line, or in the leader position of a list item (the first token right
+    after the `-`/`*`/`1.` marker). An emoji in the middle of a prose
+    sentence is not flagged, and `text` here is already code-stripped, so
+    an emoji inside a fenced code block never reaches this check.
+    """
+    hits = 0
+    for line in text.splitlines():
+        heading = re.match(r"^\s*#{1,6}\s+(.*)$", line)
+        if heading:
+            hits += len(EMOJI.findall(heading.group(1)))
+            continue
+        leader = re.match(r"^\s*(?:[-*+]|\d+[.)])\s+(\S+)", line)
+        if leader:
+            hits += len(EMOJI.findall(leader.group(1)))
+    return hits
+
+
 def lint(text, text_type):
     body = strip_code(text)
-    heading_body = strip_code_keep_headings(text)
     sents = sentences(body)
     limit = LIMITS[text_type]
     counts = {}
@@ -231,11 +311,11 @@ def lint(text, text_type):
             rotation += len(stems) - 1
     counts["synonym_rotation"] = rotation
     counts["curly_quote"] = len(CURLY_QUOTE.findall(body))
-    counts["title_case_heading"] = _rule_title_case_heading(heading_body)
+    counts["title_case_heading"] = _rule_title_case_heading(body)
     counts["transition_opener"] = _rule_transition_opener(body)
     counts["consecutive_same_start"] = _rule_consecutive_same_start(body)
-    counts["bold_mini_heading"] = len(BOLD_MINI_HEADING.findall(text))
-    counts["emoji_decoration"] = len(EMOJI.findall(text))
+    counts["bold_mini_heading"] = len(BOLD_MINI_HEADING.findall(body))
+    counts["emoji_decoration"] = _rule_emoji_decoration(body)
     counts["filter_word"] = len(FILTER_WORDS.findall(body))
 
     words = max(1, len(body.split()))
@@ -292,11 +372,71 @@ EMOJI_FIXTURE = """## 🚀 Launch
 
 We shipped the update today."""
 
-FILTER_WORD_FIXTURE = """She felt nervous as the deadline approached."""
+# An emoji inside a fenced code block, and an emoji mid-sentence in prose,
+# are both left alone; only a heading or a list-item leader is flagged.
+EMOJI_CODE_FIXTURE = """We shipped the update today 🚀 and it went fine.
+
+```
+print('🚀 done')
+```
+"""
+
+EMOJI_LEADER_FIXTURE = """- 🚀 Shipped the new pipeline.
+- Cleaned up the old one."""
+
+FILTER_WORD_FIXTURE = """The on-call engineer felt the rollback was too risky to attempt."""
 
 # A non-conditional repeat must fire (contrast with CLEAN_FIXTURE's "If X. If Y."
 # exemption, which must not).
-REPEAT_START_FIXTURE = """She noted the door. She noted the lock."""
+REPEAT_START_FIXTURE = """The service logged the error. The service logged the retry."""
+
+# Each table row / list item carries ONE lone, correct dash. That is never
+# a cluster (contradiction 3), so em_dash must stay 0.
+DASH_TABLE_FIXTURE = """| Field | Note |
+|---|---|
+| timeout | the client wait — in seconds |
+| retries | attempts before failure — capped at five |
+| backoff | delay between attempts — doubles each time |"""
+
+DASH_LIST_FIXTURE = """1. Set the timeout — 30 seconds is typical.
+2. Set the retry count — three is typical.
+3. Enable backoff — exponential is the default.
+4. Turn on logging — debug level for the first run."""
+
+# Two-plus table rows whose first cell is inline code must not register as
+# a repeated sentence opener.
+CODE_ROW_FIXTURE = """| Command | Effect |
+|---|---|
+| `git add` | stages the change |
+| `git commit` | records the snapshot |
+| `git push` | uploads the commits |"""
+
+# A wide Markdown table must not become a giant over-limit "sentence".
+TABLE_LONG_ROW_FIXTURE = """| Setting | Explanation |
+|---|---|
+| timeout | The number of seconds the client waits for a response from the server before it gives up and reports a connection error to the caller and writes the failure to the log for the on-call engineer to review later. |"""
+
+# Proper-noun and structured headings are sentence case already; the
+# capitalized words are proper nouns or phrase-initial, not title case.
+PROPER_NOUN_HEADING_FIXTURE = """## Working with Docker
+
+Body.
+
+## Deploy to Kubernetes
+
+Body.
+
+## Install Postgres
+
+Body.
+
+### Section 1 — Words (Rules 1.1-1.15)
+
+Body."""
+
+# "key" / "gate" match as exact words only: keyword, keyboard, gateway
+# must not count.
+SLOP_KEY_GATE_FIXTURE = """The API key is a keyword in the keyboard config."""
 
 
 def self_test():
@@ -311,8 +451,16 @@ def self_test():
     curly = lint(CURLY_QUOTE_FIXTURE, "descriptive")
     bold_heading = lint(BOLD_MINI_HEADING_FIXTURE, "descriptive")
     emoji = lint(EMOJI_FIXTURE, "descriptive")
+    emoji_code = lint(EMOJI_CODE_FIXTURE, "descriptive")
+    emoji_leader = lint(EMOJI_LEADER_FIXTURE, "descriptive")
     filter_word = lint(FILTER_WORD_FIXTURE, "descriptive")
     repeat_start = lint(REPEAT_START_FIXTURE, "descriptive")
+    dash_table = lint(DASH_TABLE_FIXTURE, "descriptive")
+    dash_list = lint(DASH_LIST_FIXTURE, "descriptive")
+    code_row = lint(CODE_ROW_FIXTURE, "descriptive")
+    table_long_row = lint(TABLE_LONG_ROW_FIXTURE, "procedural")
+    proper_noun_heading = lint(PROPER_NOUN_HEADING_FIXTURE, "descriptive")
+    slop_key_gate = lint(SLOP_KEY_GATE_FIXTURE, "descriptive")
 
     assert "contraction" not in slop["violations"], "contraction key must not exist (contradiction 1)"
     assert slop["violations"]["sentence_over_limit"] >= 1, slop
@@ -349,12 +497,37 @@ def self_test():
     assert curly["violations"]["curly_quote"] >= 1, curly
     assert bold_heading["violations"]["bold_mini_heading"] >= 1, bold_heading
     assert emoji["violations"]["emoji_decoration"] >= 1, emoji
+    assert emoji_code["violations"]["emoji_decoration"] == 0, (
+        f"an emoji in a code fence or mid-prose is not decoration: {emoji_code}"
+    )
+    assert emoji_leader["violations"]["emoji_decoration"] >= 1, (
+        f"an emoji as a list-item leader is decoration: {emoji_leader}"
+    )
     assert filter_word["violations"]["filter_word"] >= 1, filter_word
     assert repeat_start["violations"]["consecutive_same_start"] >= 1, (
         f"a genuine non-conditional repeat must fire: {repeat_start}"
     )
     assert clean["violations"]["consecutive_same_start"] == 0, (
         f"the 'If X. If Y.' conditional exemption must still hold: {clean}"
+    )
+
+    assert dash_table["violations"]["em_dash"] == 0, (
+        f"one lone dash per table row is not a cluster (contradiction 3): {dash_table}"
+    )
+    assert dash_list["violations"]["em_dash"] == 0, (
+        f"one lone dash per list item is not a cluster (contradiction 3): {dash_list}"
+    )
+    assert code_row["violations"]["consecutive_same_start"] == 0, (
+        f"code-first table rows are not a repeated opener: {code_row}"
+    )
+    assert table_long_row["violations"]["sentence_over_limit"] == 0, (
+        f"a wide table row is not an over-limit sentence: {table_long_row}"
+    )
+    assert proper_noun_heading["violations"]["title_case_heading"] == 0, (
+        f"proper-noun and phrase-initial headings are sentence case: {proper_noun_heading}"
+    )
+    assert slop_key_gate["violations"]["slop_word"] == 1, (
+        f"'key'/'gate' match exact words only, not keyword/keyboard/gateway: {slop_key_gate}"
     )
 
     print(

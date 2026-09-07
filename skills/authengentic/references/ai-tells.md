@@ -277,9 +277,12 @@ highlight, showcase, meticulous. The full map is in `references/word-swaps.md`.
 
 **Why it happens:** models use these words far more often than people do, and in groups.
 
-**Why it is one entry, not forty:** a single "delve" or one "robust" means nothing (a technical
-"robust" is fine). The tell is the density. Three or more from the list in a paragraph, or the same
-one twice on a page, is the signal.
+**Why it is one entry, not forty:** the *authorship* signal is density, not any single word. Three
+or more from the list in a paragraph, or the same one twice on a page, is what points to a machine
+(a lone technical "robust" can be correct on its own). "One entry" means one catalog entry to check,
+not a licence to tally and wait: as a rule, each slop word is still fixed on the first hit (Rule
+1.15, "Where authengentic differs from its sources" item 4). Cross-ref: the note at the end of the
+false-positive whitelist.
 
 **Before:** We harness state-of-the-art embeddings to unlock the full potential of a robust retrieval
 pipeline, delving into the intricate interplay of recall and latency.
@@ -727,7 +730,8 @@ professional-pass whitelist.
 | Not evidence of AI | Why |
 |---|---|
 | Clean grammar and correct punctuation | Plenty of people write cleanly. Injecting typos to look human is a detectable gimmick. |
-| A single em-dash, one semicolon, one "delve", one "however", one "for example" | One hit means nothing. See the note on clusters below. |
+| A single, correctly-placed em-dash | Not a violation and not evidence of AI. Dashes are the one cumulative rule in authengentic: only a cluster counts. See the note on clusters below. |
+| One semicolon, one "delve", one "however" in isolation | Not by itself proof a machine wrote the text; the authorship tell is density, not the lone instance. But authengentic still fixes each on the first hit (Rule 8.1 for the semicolon, Rule 1.15 for the slop word; "Where authengentic differs from its sources" item 4). This row is about authorship evidence, not about which rules apply. |
 | Curly quotes on their own | Most editors and word processors auto-curl. Weak signal alone. |
 | A formal register in a formal venue | Register match beats forced casualness. A grant proposal is allowed to sound like one. |
 | One short sentence for emphasis | Human, when it carries a new fact. The tell is the closer that repeats (#21). |

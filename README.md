@@ -44,7 +44,7 @@ authengentic overrules its parent on four points. Each is stated in full in [SKI
 
 ## See it
 
-Left is real, unedited Claude output. Right is the same model with authengentic loaded. The right column keeps two contractions and one em-dash, and all three are correct, so authengentic leaves them alone (differences 1 and 3 above).
+Left is representative unedited AI output. Right is the same prompt with authengentic loaded. The right column keeps two contractions and one em-dash, and all three are correct, so authengentic leaves them alone (differences 1 and 3 above).
 
 <table>
 <tr>
@@ -80,6 +80,6 @@ Around the catalog:
 
 ## License
 
-MIT for everything in this repo. Full text in [LICENSE](LICENSE).
+authengentic's own files are MIT (see [LICENSE](LICENSE)). Merged rule text adapted from agent-style's `RULES.md` remains under [CC-BY-4.0](https://creativecommons.org/licenses/by/4.0/); see [SOURCES.md](SOURCES.md).
 
 authengentic re-expresses rule content from four upstream projects. [SOURCES.md](SOURCES.md) lists each one, its license, and what was used. agent-style's `RULES.md` rule text is CC-BY-4.0, so SOURCES.md is a required attribution wherever authengentic's rule text draws on it. The other three sources are MIT.
