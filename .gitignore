@@ -1,3 +1,8 @@
 __pycache__/
 *.pyc
 node_modules/
+
+# Desktop build artifacts and the linter copies the build scripts stage.
+dist/
+mcp/linter/
+skills/authengentic/scripts/

@@ -33,6 +33,19 @@ codex plugin add authengentic@authengentic
 
 Then ask for any technical or professional writing, or say: *"rewrite this with authengentic"*.
 
+**Claude Desktop.** The app has three tabs, and they load extensions differently:
+
+- **Code tab.** It reads the same settings files as the CLI, so the plugin works
+  with no port. Install it through **+ → Plugins → Add plugin**, then set
+  `{"outputStyle": "authengentic:authengentic"}` in `~/.claude/settings.json`,
+  because `/config` opens a pane here, not a picker.
+- **Chat and Cowork tabs.** These have no hooks and no output style. Upload the
+  skill as a zip (`./scripts/build-desktop-skill.sh`), paste the account profile
+  block for an always-on register, and install the MCP linter bundle
+  (`./scripts/build-mcpb.sh`) for a one-call check.
+
+Full steps and the fidelity limits are in [docs/claude-desktop.md](docs/claude-desktop.md).
+
 ## What's different from SimpleEnglish
 
 authengentic overrules its parent on four points. Each is stated in full in [SKILL.md, "Where authengentic differs from its sources"](skills/authengentic/SKILL.md#where-authengentic-differs-from-its-sources).

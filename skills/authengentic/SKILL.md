@@ -10,14 +10,12 @@ description: |
   recreate. Use for documentation, READMEs, runbooks, procedures, error
   messages, release notes, incident reports, postmortems, tickets, PR and
   issue replies, technical articles, and API guides. Also use when the user
-  says "authengentic", "humanize", "de-slop", "de-AI", "unslop", "sound less
-  like AI", "make this not read like ChatGPT", "STE", "Simplified Technical
-  English", "ASD-STE100", "plain English", "layman's terms", "explain it
-  simply", "no jargon", "make this readable", "write for non-native readers",
-  or asks for docs that translate well. The same rules govern the reply:
-  answer first, five sentences or fewer, prose only.
+  says "authengentic", "humanize", "de-slop", "sound less like AI", "STE",
+  "ASD-STE100", "plain English", "no jargon", "make this readable", or asks
+  for docs that translate well. The same rules govern the reply: answer
+  first, five sentences or fewer, prose only.
 license: MIT
-compatibility: claude-code cursor codex gemini-cli opencode
+compatibility: Runs in any Agent Skills client (Claude Code, Cursor, Codex, Gemini CLI, OpenCode) and as an uploaded skill in the Claude apps. The bundled linter under scripts/ needs python3.
 metadata:
   version: "1.0.0"
   standard: ASD-STE100 Issue 9 (2025-01-15)
@@ -460,6 +458,27 @@ The reply is Plain mode, in every mode: 25 words per sentence, simple tenses, ac
 
 **Before:** The failure stems from control-plane leader election during pod churn, with R3 quorum re-formation.
 **After:** The pods restarted and the queue lost its leader for a short time. It recovered without help. You don't have to do anything.
+
+## Run the bundled linter
+
+Packaged skill builds ship the deterministic linter at `scripts/authengentic_lint.py`.
+Some hosts, such as the Claude apps, run no post-write hook. On those hosts this
+step is the only mechanical check.
+
+If `scripts/authengentic_lint.py` is present, run it after you write or rewrite a
+document, and before you deliver:
+
+1. For a file, run `python3 scripts/authengentic_lint.py --type descriptive <file>`.
+   Use `--type procedural` for a document that is mostly steps.
+2. For text you have not written to a file, pipe it: `printf '%s' "<text>" | python3 scripts/authengentic_lint.py --type descriptive -`.
+3. Read the JSON report. Every count except the three in step 4 is
+   fix-on-first-hit. One `banned_modal`, `semicolon`, `perfect_tense`,
+   `slop_word`, or `curly_quote` is a defect to remove now.
+4. Weigh `sentence_over_limit`, `em_dash`, and `consecutive_same_start` by size.
+   A small count on one sentence is a nudge, a large count is a rewrite.
+5. Fix what the report finds, then run the self-check below.
+
+The linter is a regex pass, not a grammar parser. It is a floor, not a verdict.
 
 ## Self-check before you deliver
 

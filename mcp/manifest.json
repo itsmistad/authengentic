@@ -1,0 +1,64 @@
+{
+  "manifest_version": "0.3",
+  "name": "authengentic",
+  "display_name": "Authengentic",
+  "version": "1.0.0",
+  "description": "Run the authengentic linter and the review and rewrite operations from Claude Desktop.",
+  "long_description": "Authengentic writes plain, human-sounding technical and professional prose. This bundle adds a deterministic linter tool and two prompts (authengentic-review, authengentic-rewrite) to the Claude Desktop chat surface, which has no post-write hook of its own. The linter is a regex pass, not a compliance verdict. It needs python3 on the machine.",
+  "author": {
+    "name": "dj.williamson"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dj-williamson/authengentic"
+  },
+  "license": "MIT",
+  "keywords": ["technical-writing", "documentation", "ai-detection", "prose", "style", "linter"],
+  "server": {
+    "type": "node",
+    "entry_point": "server/index.js",
+    "mcp_config": {
+      "command": "node",
+      "args": ["${__dirname}/server/index.js"],
+      "env": {
+        "AUTHENGENTIC_PYTHON": "${user_config.python_path}"
+      }
+    }
+  },
+  "tools": [
+    {
+      "name": "authengentic_lint",
+      "description": "Count deterministic authengentic violations in non-fiction text and return the JSON report plus a short verdict."
+    }
+  ],
+  "prompts": [
+    {
+      "name": "authengentic-review",
+      "description": "Diagnose non-fiction text against the authengentic ruleset. Report only.",
+      "arguments": ["text"],
+      "text": "Review this text against the authengentic ruleset, report only: ${arguments.text}"
+    },
+    {
+      "name": "authengentic-rewrite",
+      "description": "Rewrite non-fiction text in place to follow the authengentic ruleset.",
+      "arguments": ["text"],
+      "text": "Rewrite this text with the authengentic refactor operation: ${arguments.text}"
+    }
+  ],
+  "user_config": {
+    "python_path": {
+      "type": "string",
+      "title": "Python interpreter",
+      "description": "Absolute path to a python3 interpreter. Leave blank to use python3 from PATH.",
+      "required": false,
+      "default": ""
+    }
+  },
+  "compatibility": {
+    "claude_desktop": ">=1.0.0",
+    "platforms": ["darwin", "win32", "linux"],
+    "runtimes": {
+      "node": ">=18.0.0"
+    }
+  }
+}
