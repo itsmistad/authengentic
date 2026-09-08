@@ -6,3 +6,5 @@ node_modules/
 dist/
 mcp/linter/
 skills/authengentic/scripts/
+
+.DS_Store
