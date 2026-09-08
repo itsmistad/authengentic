@@ -60,12 +60,12 @@ Code and configuration files are skipped.
 
 `PostToolUse` runs after a write to a prose target. It lints the new text. If the write adds violations over the baseline, it prints a summary and records the target.
 
-`Stop` runs two blocking loops, each capped at 3 passes.
+`Stop` runs a reply-register note and a file check.
 
-- The reply-register loop scores `last_assistant_message` with the full linter. Mechanical breaks block it, such as a long sentence, a banned modal, a semicolon, or a slop word. Judgment calls, such as two sentences that open with the same word, go into a note instead.
-- The file loop re-scores every recorded target against its baseline.
+- The reply-register check scores `last_assistant_message` with the full linter. It never blocks. Claude Code already showed the reply and a `Stop` block cannot hide it, so the check prints one summary through a note, prefixed `🧠: `. The summary skips the sentence-length rules. It names each slop word, quotes the first two words of each trailing `if`/`when` clause, and maps each synonym rotation as `<first> -> <alt>, <alt>`. Prevention lives in the pre-send checklist in `prompts/system-prompt.md`.
+- The file check re-scores every recorded target against its baseline. A target still over baseline blocks the stop once and returns a `reason` with `suppressOutput` set. That is one fix pass. If the next stop still shows the target over baseline, the check releases and reports the leftover through a note.
 
-While a loop has work, it blocks the stop and returns a `reason`. One stop can carry both loops. After 3 passes, or after a pass that lowers no count, the loop gives up and reports the rest through a note.
+One stop can carry the reply note and a file block together. The `decision` field is what makes a `Stop` hook enforce: it holds the turn open and feeds `reason` back to the model. Exit 2 on `PostToolUse` is advisory, because the write already landed.
 
 Notion support ships unverified. The Notion MCP was absent from the build machine, so its tool names come from the Notion MCP docs. Test it against a live workspace first.
 

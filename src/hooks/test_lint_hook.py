@@ -125,6 +125,16 @@ class DocAppTests(unittest.TestCase):
         proc = post(self.state, "mcp__notion__notion-search", {"query": "leverage robust"}, session="n")
         self.assertEqual(proc.returncode, 0)
 
+    def test_file_check_blocks_once_then_releases(self):
+        bad = f'blocks update --id F1 --markdown "{SLOP.strip()}"'
+        post(self.state, "mcp__craft__craft_write", {"command": bad}, session="f1")
+        first = json.loads(stop(self.state, session="f1").stdout)
+        self.assertEqual(first["decision"], "block")
+        self.assertIn("one pass", first["reason"])
+        second = json.loads(stop(self.state, session="f1").stdout)
+        self.assertNotIn("decision", second)
+        self.assertIn("file check done", second["systemMessage"])
+
     def test_revised_craft_write_clears_the_block(self):
         bad = f'blocks update --id D9 --markdown "{SLOP.strip()}"'
         post(self.state, "mcp__craft__craft_write", {"command": bad}, session="c")
@@ -134,7 +144,7 @@ class DocAppTests(unittest.TestCase):
         self.assertEqual(stop(self.state, session="c").stdout.strip(), "")
 
 
-class ReplyLoopTests(unittest.TestCase):
+class ReplyNoteTests(unittest.TestCase):
     def setUp(self):
         self.state = tempfile.mkdtemp()
 
@@ -142,36 +152,48 @@ class ReplyLoopTests(unittest.TestCase):
         proc = stop(self.state, reply="The migration finished and the database rebuilt its table.")
         self.assertEqual(proc.stdout.strip(), "")
 
-    def test_soft_violation_is_a_note_not_a_block(self):
+    def test_judgment_violation_is_a_note_not_a_block(self):
         proc = stop(self.state, session="soft", reply="The build passed. The tests ran green.")
         payload = json.loads(proc.stdout)
         self.assertNotIn("decision", payload)
-        self.assertIn("reply note (not blocking)", payload["systemMessage"])
+        self.assertIn("🧠:", payload["systemMessage"])
         self.assertIn("consecutive same start", payload["systemMessage"])
 
-    def test_reply_blocks_then_releases_without_progress(self):
+    def test_reply_never_blocks(self):
         bad = "Certainly! It is worth noting you should leverage the robust pipeline."
-        for expected in ("reply refactor pass 1 of 3", "reply refactor pass 2 of 3"):
+        for _ in range(3):
             payload = json.loads(stop(self.state, session="r", reply=bad).stdout)
-            self.assertEqual(payload["decision"], "block")
-            self.assertIn(expected, payload["reason"])
-        payload = json.loads(stop(self.state, session="r", reply=bad).stdout)
-        self.assertNotIn("decision", payload)
-        self.assertIn("reply loop stopped", payload["systemMessage"])
+            self.assertNotIn("decision", payload)
+            self.assertIn("🧠:", payload["systemMessage"])
+            self.assertTrue(payload["suppressOutput"])
 
-    def test_reply_never_blocks_more_than_three_passes(self):
-        replies = [
-            "Certainly! One. Two sentences here. Three sentences here. Four sentences now. Five plus six.",
-            "Sure, one. Two here now. Three here now. Four is here. Five and six words.",
-            "Absolutely! A. B is here. C is here. D is now. E plus F here.",
-            "Great question. G. H here now. I here now. J is now. K plus L now.",
-        ]
-        blocks = 0
-        for r in replies + replies:
-            payload = json.loads(stop(self.state, session="rr", reply=r).stdout or "{}")
-            if payload.get("decision") == "block":
-                blocks += 1
-        self.assertLessEqual(blocks, 3)
+    def test_note_counts_and_lists_slop_words(self):
+        bad = "You should leverage our robust and comprehensive pipeline, it is powerful."
+        payload = json.loads(stop(self.state, session="slop", reply=bad).stdout)
+        self.assertNotIn("decision", payload)
+        msg = payload["systemMessage"]
+        self.assertIn("slop word 4:", msg)
+        for word in ("leverage", "robust", "comprehensive", "powerful"):
+            self.assertIn(word, msg)
+
+    def test_note_omits_sentence_length_checks(self):
+        long_sentence = " ".join(f"word{i}" for i in range(40)) + "."
+        bad = "One here now. Two here now. Three here now. " + long_sentence
+        payload = json.loads(stop(self.state, session="len", reply=bad).stdout or "{}")
+        msg = payload.get("systemMessage", "")
+        self.assertNotIn("sentence over limit", msg)
+        self.assertNotIn("sentences outside code and lists", msg)
+
+    def test_note_quotes_trailing_condition_starts(self):
+        bad = "Read the log if you need to. Restart the worker when the queue drains."
+        payload = json.loads(stop(self.state, session="tc", reply=bad).stdout)
+        self.assertIn('trailing condition: "if you", "when the"', payload["systemMessage"])
+
+    def test_note_maps_synonym_rotation(self):
+        bad = "You must check the value, verify the config, and confirm the settings."
+        payload = json.loads(stop(self.state, session="sr", reply=bad).stdout)
+        msg = payload["systemMessage"]
+        self.assertIn('synonym rotation: "check -> verify, confirm", "config -> settings"', msg)
 
 
 class BaselineScopingTests(unittest.TestCase):
@@ -206,7 +228,7 @@ class CombinedTests(unittest.TestCase):
     def setUp(self):
         self.state = tempfile.mkdtemp()
 
-    def test_one_payload_carries_both_loops(self):
+    def test_one_payload_carries_reply_note_and_file_block(self):
         cmd = f'blocks update --id X1 --markdown "{SLOP.strip()}"'
         post(self.state, "mcp__craft__craft_write", {"command": cmd}, session="both")
         payload = json.loads(stop(
@@ -214,8 +236,8 @@ class CombinedTests(unittest.TestCase):
             reply="Certainly! It is worth noting you should leverage the robust pipeline.",
         ).stdout)
         self.assertEqual(payload["decision"], "block")
-        self.assertIn("reply refactor pass", payload["reason"])
-        self.assertIn("file refactor pass", payload["reason"])
+        self.assertIn("file check", payload["reason"])
+        self.assertIn("🧠:", payload["systemMessage"])
 
 
 if __name__ == "__main__":
