@@ -29,13 +29,13 @@
     ],
     "PostToolUse": [
       {
-        "matcher": "Write|Edit",
+        "matcher": "Write|Edit|MultiEdit|mcp__.*[Cc]raft.*__craft_write|mcp__.*[Nn]otion.*",
         "hooks": [
           {
             "type": "command",
             "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/src/hooks/lint_hook.py\"",
-            "timeout": 10,
-            "statusMessage": "authengentic: checking the file..."
+            "timeout": 15,
+            "statusMessage": "authengentic: checking the prose..."
           }
         ]
       }
@@ -46,7 +46,7 @@
           {
             "type": "command",
             "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/src/hooks/lint_hook.py\"",
-            "timeout": 10
+            "timeout": 15
           }
         ]
       }

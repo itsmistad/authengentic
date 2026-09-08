@@ -46,6 +46,29 @@ Then ask for any technical or professional writing, or say: *"rewrite this with 
 
 Full steps and the fidelity limits are in [docs/claude-desktop.md](docs/claude-desktop.md).
 
+## How the checks run
+
+The Claude Code plugin runs two hooks against the linter (`src/hooks/lint_hook.py`). Both score changed prose against a baseline, never against zero. For a local file, the baseline is the version at git `HEAD`. A doc-app page or a new file starts from zero, so the session owns whatever text it writes. The `PostToolUse` matcher and the doc-app tool names live in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
+
+A prose target is one of three things.
+
+- A local file with a prose extension: `.md`, `.mdx`, `.txt`, `.rst`, `.adoc`, and similar.
+- An extensionless file that reads as prose.
+- A Craft or Notion page.
+
+Code and configuration files are skipped.
+
+`PostToolUse` runs after a write to a prose target. It lints the new text. If the write adds violations over the baseline, it prints a summary and records the target.
+
+`Stop` runs two blocking loops, each capped at 3 passes.
+
+- The reply-register loop scores `last_assistant_message` with the full linter. Mechanical breaks block it, such as a long sentence, a banned modal, a semicolon, or a slop word. Judgment calls, such as two sentences that open with the same word, go into a note instead.
+- The file loop re-scores every recorded target against its baseline.
+
+While a loop has work, it blocks the stop and returns a `reason`. One stop can carry both loops. After 3 passes, or after a pass that lowers no count, the loop gives up and reports the rest through a note.
+
+Notion support ships unverified. The Notion MCP was absent from the build machine, so its tool names come from the Notion MCP docs. Test it against a live workspace first.
+
 ## What's different from SimpleEnglish
 
 authengentic overrules its parent on four points. Each is stated in full in [SKILL.md, "Where authengentic differs from its sources"](skills/authengentic/SKILL.md#where-authengentic-differs-from-its-sources).

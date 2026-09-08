@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Tests for src/hooks/lint_hook.py. Run: python3 src/hooks/test_lint_hook.py"""
 import json
+import os
 import pathlib
 import subprocess
 import sys
@@ -10,77 +11,211 @@ import unittest
 HERE = pathlib.Path(__file__).resolve().parent
 HOOK = HERE / "lint_hook.py"
 
+SLOP = (
+    "You should leverage our robust system in order to seamlessly "
+    "facilitate onboarding; it is important to note this is crucial.\n"
+)
+CLEAN = "The service retries a failed upload automatically.\n"
 
-def run_hook(event):
+
+def run_hook(event, state_dir=None):
+    env = dict(os.environ)
+    if state_dir:
+        env["AUTHENGENTIC_STATE_DIR"] = str(state_dir)
     proc = subprocess.run(
         [sys.executable, str(HOOK)],
         input=json.dumps(event),
         capture_output=True,
         text=True,
+        env=env,
     )
     return proc
 
 
-class PostToolUseTests(unittest.TestCase):
-    def test_non_markdown_file_is_ignored(self):
+def write_md(text):
+    fh = tempfile.NamedTemporaryFile(suffix=".md", mode="w", delete=False)
+    fh.write(text)
+    fh.close()
+    return fh.name
+
+
+def post(state, tool_name, tool_input, session="s"):
+    return run_hook({
+        "hook_event_name": "PostToolUse",
+        "tool_name": tool_name,
+        "session_id": session,
+        "tool_input": tool_input,
+    }, state)
+
+
+def stop(state, session="s", reply=None):
+    event = {"hook_event_name": "Stop", "session_id": session}
+    if reply is not None:
+        event["last_assistant_message"] = reply
+    return run_hook(event, state)
+
+
+class PostToolUseLocalTests(unittest.TestCase):
+    def setUp(self):
+        self.state = tempfile.mkdtemp()
+
+    def test_code_file_is_ignored(self):
         with tempfile.NamedTemporaryFile(suffix=".py", mode="w", delete=False) as fh:
-            fh.write("You should leverage this in order to proceed.")
+            fh.write("x = 'you should leverage this in order to proceed'\n")
             path = fh.name
-        proc = run_hook({"hook_event_name": "PostToolUse", "tool_input": {"file_path": path}})
+        proc = post(self.state, "Edit", {"file_path": path})
         self.assertEqual(proc.returncode, 0)
         self.assertEqual(proc.stderr, "")
 
-    def test_slop_markdown_file_flags_violations(self):
-        with tempfile.NamedTemporaryFile(suffix=".md", mode="w", delete=False) as fh:
-            fh.write(
-                "You should leverage our robust system in order to seamlessly "
-                "facilitate onboarding; it is important to note this is crucial.\n"
-            )
-            path = fh.name
-        proc = run_hook({"hook_event_name": "PostToolUse", "tool_input": {"file_path": path}})
+    def test_slop_markdown_write_flags_violations(self):
+        proc = post(self.state, "Write", {"file_path": write_md(SLOP), "content": SLOP})
         self.assertEqual(proc.returncode, 2)
         self.assertIn("authengentic:", proc.stderr)
 
-    def test_clean_markdown_file_is_silent(self):
-        with tempfile.NamedTemporaryFile(suffix=".md", mode="w", delete=False) as fh:
-            fh.write("The service retries a failed upload automatically.\n")
-            path = fh.name
-        proc = run_hook({"hook_event_name": "PostToolUse", "tool_input": {"file_path": path}})
+    def test_clean_markdown_write_is_silent(self):
+        proc = post(self.state, "Write", {"file_path": write_md(CLEAN), "content": CLEAN})
         self.assertEqual(proc.returncode, 0)
 
-    def test_contractions_in_markdown_do_not_trigger_violation(self):
-        with tempfile.NamedTemporaryFile(suffix=".md", mode="w", delete=False) as fh:
-            fh.write("It's done. The build didn't fail this time, and we're glad.\n")
-            path = fh.name
-        proc = run_hook({"hook_event_name": "PostToolUse", "tool_input": {"file_path": path}})
+    def test_extensionless_prose_file_is_checked(self):
+        d = tempfile.mkdtemp()
+        path = str(pathlib.Path(d) / "COMMIT_EDITMSG")
+        pathlib.Path(path).write_text(SLOP, encoding="utf-8")
+        proc = post(self.state, "Edit", {"file_path": path})
+        self.assertEqual(proc.returncode, 2, proc.stderr)
+
+    def test_contractions_do_not_trigger_violation(self):
+        body = "It's done. The build didn't fail this time, and we're glad.\n"
+        proc = post(self.state, "Write", {"file_path": write_md(body), "content": body})
         self.assertEqual(proc.returncode, 0, proc.stderr)
 
 
-class StopTests(unittest.TestCase):
-    def test_short_clean_reply_is_silent(self):
-        proc = run_hook({
-            "hook_event_name": "Stop",
-            "last_assistant_message": "The migration completed. The database rebuilt the table.",
-        })
+class DocAppTests(unittest.TestCase):
+    def setUp(self):
+        self.state = tempfile.mkdtemp()
+
+    def test_craft_write_flags_and_blocks(self):
+        cmd = f'blocks update --id ABC-1 --markdown "{SLOP.strip()}"'
+        proc = post(self.state, "mcp__craft__craft_write", {"command": cmd}, session="c")
+        self.assertEqual(proc.returncode, 2, proc.stderr)
+        self.assertIn("craft:ABC-1", proc.stderr)
+        payload = json.loads(stop(self.state, session="c").stdout)
+        self.assertEqual(payload["decision"], "block")
+        self.assertIn("craft:ABC-1", payload["reason"])
+
+    def test_craft_read_is_ignored(self):
+        proc = post(self.state, "mcp__craft__craft_read", {"command": "documents list"}, session="c")
         self.assertEqual(proc.returncode, 0)
+        self.assertEqual(proc.stderr, "")
+
+    def test_clean_craft_write_is_silent(self):
+        cmd = f'blocks add --id P1 --markdown "{CLEAN.strip()}"'
+        proc = post(self.state, "mcp__craft__craft_write", {"command": cmd}, session="c")
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+
+    def test_notion_update_page_flags_and_blocks(self):
+        proc = post(self.state, "mcp__notion__notion-update-page", {
+            "page_id": "p1", "command": "replace_content", "new_str": SLOP.strip(),
+        }, session="n")
+        self.assertEqual(proc.returncode, 2, proc.stderr)
+        self.assertIn("notion:p1", proc.stderr)
+        payload = json.loads(stop(self.state, session="n").stdout)
+        self.assertIn("notion:p1", payload["reason"])
+
+    def test_notion_search_is_ignored(self):
+        proc = post(self.state, "mcp__notion__notion-search", {"query": "leverage robust"}, session="n")
+        self.assertEqual(proc.returncode, 0)
+
+    def test_revised_craft_write_clears_the_block(self):
+        bad = f'blocks update --id D9 --markdown "{SLOP.strip()}"'
+        post(self.state, "mcp__craft__craft_write", {"command": bad}, session="c")
+        self.assertEqual(json.loads(stop(self.state, session="c").stdout)["decision"], "block")
+        good = f'blocks update --id D9 --markdown "{CLEAN.strip()}"'
+        post(self.state, "mcp__craft__craft_write", {"command": good}, session="c")
+        self.assertEqual(stop(self.state, session="c").stdout.strip(), "")
+
+
+class ReplyLoopTests(unittest.TestCase):
+    def setUp(self):
+        self.state = tempfile.mkdtemp()
+
+    def test_clean_reply_is_silent(self):
+        proc = stop(self.state, reply="The migration finished and the database rebuilt its table.")
         self.assertEqual(proc.stdout.strip(), "")
 
-    def test_filler_opener_is_flagged(self):
-        proc = run_hook({
-            "hook_event_name": "Stop",
-            "last_assistant_message": "Certainly! Here is the answer you asked for.",
-        })
-        self.assertEqual(proc.returncode, 0)
+    def test_soft_violation_is_a_note_not_a_block(self):
+        proc = stop(self.state, session="soft", reply="The build passed. The tests ran green.")
         payload = json.loads(proc.stdout)
-        self.assertIn("filler opener", payload["systemMessage"])
+        self.assertNotIn("decision", payload)
+        self.assertIn("reply note (not blocking)", payload["systemMessage"])
+        self.assertIn("consecutive same start", payload["systemMessage"])
 
-    def test_contractions_do_not_trigger_a_problem(self):
-        proc = run_hook({
-            "hook_event_name": "Stop",
-            "last_assistant_message": "It's done. The build didn't fail this time.",
-        })
-        self.assertEqual(proc.returncode, 0)
-        self.assertEqual(proc.stdout.strip(), "")
+    def test_reply_blocks_then_releases_without_progress(self):
+        bad = "Certainly! It is worth noting you should leverage the robust pipeline."
+        for expected in ("reply refactor pass 1 of 3", "reply refactor pass 2 of 3"):
+            payload = json.loads(stop(self.state, session="r", reply=bad).stdout)
+            self.assertEqual(payload["decision"], "block")
+            self.assertIn(expected, payload["reason"])
+        payload = json.loads(stop(self.state, session="r", reply=bad).stdout)
+        self.assertNotIn("decision", payload)
+        self.assertIn("reply loop stopped", payload["systemMessage"])
+
+    def test_reply_never_blocks_more_than_three_passes(self):
+        replies = [
+            "Certainly! One. Two sentences here. Three sentences here. Four sentences now. Five plus six.",
+            "Sure, one. Two here now. Three here now. Four is here. Five and six words.",
+            "Absolutely! A. B is here. C is here. D is now. E plus F here.",
+            "Great question. G. H here now. I here now. J is now. K plus L now.",
+        ]
+        blocks = 0
+        for r in replies + replies:
+            payload = json.loads(stop(self.state, session="rr", reply=r).stdout or "{}")
+            if payload.get("decision") == "block":
+                blocks += 1
+        self.assertLessEqual(blocks, 3)
+
+
+class BaselineScopingTests(unittest.TestCase):
+    """The file loop scores an edit against the committed version, not zero."""
+
+    def setUp(self):
+        self.state = tempfile.mkdtemp()
+        self.repo = pathlib.Path(tempfile.mkdtemp())
+        for args in (["init", "-q"], ["config", "user.email", "t@t"], ["config", "user.name", "t"]):
+            subprocess.run(["git", *args], cwd=self.repo, check=True)
+        self.doc = self.repo / "doc.md"
+        self.doc.write_text(SLOP, encoding="utf-8")
+        subprocess.run(["git", "add", "doc.md"], cwd=self.repo, check=True)
+        subprocess.run(["git", "commit", "-qm", "seed"], cwd=self.repo, check=True)
+
+    def test_editing_debt_without_adding_violations_is_silent(self):
+        self.doc.write_text(SLOP + CLEAN, encoding="utf-8")
+        proc = post(self.state, "Edit", {"file_path": str(self.doc)}, session="b")
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        self.assertEqual(stop(self.state, session="b").stdout.strip(), "")
+
+    def test_only_added_violations_are_flagged(self):
+        self.doc.write_text(SLOP + SLOP, encoding="utf-8")
+        proc = post(self.state, "Edit", {"file_path": str(self.doc)}, session="b")
+        self.assertEqual(proc.returncode, 2)
+        self.assertIn("over the baseline", proc.stderr)
+        payload = json.loads(stop(self.state, session="b").stdout)
+        self.assertEqual(payload["decision"], "block")
+
+
+class CombinedTests(unittest.TestCase):
+    def setUp(self):
+        self.state = tempfile.mkdtemp()
+
+    def test_one_payload_carries_both_loops(self):
+        cmd = f'blocks update --id X1 --markdown "{SLOP.strip()}"'
+        post(self.state, "mcp__craft__craft_write", {"command": cmd}, session="both")
+        payload = json.loads(stop(
+            self.state, session="both",
+            reply="Certainly! It is worth noting you should leverage the robust pipeline.",
+        ).stdout)
+        self.assertEqual(payload["decision"], "block")
+        self.assertIn("reply refactor pass", payload["reason"])
+        self.assertIn("file refactor pass", payload["reason"])
 
 
 if __name__ == "__main__":
