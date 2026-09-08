@@ -185,7 +185,7 @@ const PROMPTS = {
 };
 
 const server = new Server(
-  { name: "authengentic", version: "1.2.0" },
+  { name: "authengentic", version: "1.2.1" },
   { capabilities: { tools: {}, prompts: {} } },
 );
 
