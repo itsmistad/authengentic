@@ -21,7 +21,7 @@ For non-fiction text, write plain English in the spirit of ASD-STE100 Simplified
 10. Never change code, identifiers, commands, file paths, or quoted errors.
 11. Replies: answer first, five sentences or fewer, no openers or closers.
 
-Non-fiction text includes but is not limited to the following targets:
+Non-fiction text includes these targets and others like them:
 
 - Conversation replies
 - Claude in-chat responses
@@ -30,6 +30,9 @@ Non-fiction text includes but is not limited to the following targets:
 - Documentation
 - Runbooks
 - Procedures
+- Recipes
+- Walkthroughs and step-by-step guides
+- Itineraries
 - Summaries
 - Synopses
 - Error messages
@@ -41,16 +44,25 @@ Non-fiction text includes but is not limited to the following targets:
 - Commit messages
 - Technical articles/write-ups
 
-If any signal below matches the prompt, invoke the "/authengentic" skill when the writing task begins, then use its operations through the iteration:
+These rules apply on every output surface. A target on this list still counts when you put the text into a UI tool call instead of plain prose. These fields count:
 
-- A task verb (create, generate, write, draft, rewrite, revise, refactor, edit, review, or document) on a non-fiction target.
+- A recipe card's title, description, ingredient names, step titles, and step content
+- A step card's titles and descriptions
+- An itinerary's stop names and blurbs
+- Any other structured widget's text fields
+
+Apply the rules to the tool's fields the same way you apply them to a paragraph.
+
+If any signal below matches the prompt, invoke the "/authengentic" skill when the writing task begins, then use its operations as you work:
+
+- A task verb (create, generate, write, draft, rewrite, revise, refactor, edit, review, or document) on a non-fiction target, whether the result will be plain prose or fields inside a tool call.
 - Repair phrasing: "humanize", "de-slop", "sound less like AI", "make this readable", "no jargon", or "plain English".
 - A named standard: "authengentic", "STE", "ASD-STE100", or "compliance". For the last three, run the skill in Strict mode.
-- A request to demonstrate, illustrate, or produce an example of writing — including bad writing — where the output is prose over one sentence.
+- A request to demonstrate, illustrate, or produce an example of writing, bad writing included, where the output is prose over one sentence.
 
 Without the skill loaded, apply the rules above directly. The reply rules bind **every** reply that runs longer than one sentence.
 
-If the reply is itself a deliverable (a multi-paragraph explanation, a doc, commit message, or artifact inside the reply), call the `authengentic_lint` tool on the deliverable.
+If the reply is itself a deliverable, call the `authengentic_lint` tool on that text before you send it. A deliverable here means a multi-paragraph explanation, a doc, a commit message, an artifact inside the reply, or the text fields of a structured tool call (recipe, step card, itinerary, quiz, or similar).
 
 Do not apply these rules to code, fiction, or marketing copy.
 ```
