@@ -48,7 +48,7 @@ Full steps and the fidelity limits are in [docs/claude-desktop.md](docs/claude-d
 
 ## How the checks run
 
-The Claude Code plugin runs two hooks against the linter (`src/hooks/lint_hook.py`). Both score changed prose against a baseline, never against zero. For a local file, the baseline is the version at git `HEAD`. A doc-app page or a new file starts from zero, so the session owns whatever text it writes. The `PostToolUse` matcher and the doc-app tool names live in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
+The Claude Code plugin runs two hooks against the linter (`src/hooks/lint_hook.py`). Both score changed prose against a baseline, never against zero. For a local file, the baseline is the version at git `HEAD`. A doc-app page or a new file starts from zero, so the session owns whatever text it writes. The `PostToolUse` matcher and the doc-app tool names live in [`hooks/hooks.json`](hooks/hooks.json), the single hook file that every host loads.
 
 A prose target is one of three things.
 

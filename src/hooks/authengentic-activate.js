@@ -58,8 +58,24 @@ function buildContext(promptText) {
   return out;
 }
 
+/*
+ * Resolve the plugin root from whichever variable the host sets. Claude Code
+ * uses CLAUDE_PLUGIN_ROOT, Codex uses PLUGIN_ROOT. If both are set, prefer
+ * CLAUDE_PLUGIN_ROOT to match the shell command in hooks/hooks.json. If a host
+ * leaves the token unexpanded (the value still contains "${"), skip that value
+ * and try the next one, then fall back to the path derived from __dirname.
+ */
+function resolvePluginRoot(env) {
+  for (const value of [env.CLAUDE_PLUGIN_ROOT, env.PLUGIN_ROOT]) {
+    if (value && !value.includes('${')) {
+      return value;
+    }
+  }
+  return '';
+}
+
 function main() {
-  const pluginRoot = process.env.PLUGIN_ROOT || process.env.CLAUDE_PLUGIN_ROOT;
+  const pluginRoot = resolvePluginRoot(process.env);
   process.stdout.write(buildContext(readFirstFile(promptCandidates(pluginRoot, __dirname))));
 }
 
@@ -73,5 +89,6 @@ module.exports = {
   buildContext,
   promptCandidates,
   readFirstFile,
+  resolvePluginRoot,
   stripFrontmatter,
 };

@@ -14,42 +14,5 @@
     "prose",
     "style"
   ],
-  "hooks": {
-    "SessionStart": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT}/src/hooks/authengentic-activate.js\"",
-            "timeout": 5,
-            "statusMessage": "Loading authengentic..."
-          }
-        ]
-      }
-    ],
-    "PostToolUse": [
-      {
-        "matcher": "Write|Edit|MultiEdit|mcp__.*[Cc]raft.*__craft_write|mcp__.*[Nn]otion.*",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/src/hooks/lint_hook.py\"",
-            "timeout": 15,
-            "statusMessage": "authengentic: checking the prose..."
-          }
-        ]
-      }
-    ],
-    "Stop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/src/hooks/lint_hook.py\"",
-            "timeout": 15
-          }
-        ]
-      }
-    ]
-  }
+  "hooks": "./hooks/hooks.json"
 }

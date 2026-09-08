@@ -7,8 +7,27 @@ const {
   FALLBACK_CONTEXT,
   MAX_CHARS,
   buildContext,
+  resolvePluginRoot,
   stripFrontmatter,
 } = require('./authengentic-activate.js');
+
+test('resolvePluginRoot reads PLUGIN_ROOT when Codex sets it', () => {
+  assert.equal(resolvePluginRoot({ PLUGIN_ROOT: '/a/b' }), '/a/b');
+});
+
+test('resolvePluginRoot reads CLAUDE_PLUGIN_ROOT when Claude Code sets it', () => {
+  assert.equal(resolvePluginRoot({ CLAUDE_PLUGIN_ROOT: '/c/d' }), '/c/d');
+});
+
+test('resolvePluginRoot prefers CLAUDE_PLUGIN_ROOT when both are set', () => {
+  assert.equal(resolvePluginRoot({ CLAUDE_PLUGIN_ROOT: '/c/d', PLUGIN_ROOT: '/a/b' }), '/c/d');
+});
+
+test('resolvePluginRoot skips an unexpanded token and falls through to the next value', () => {
+  assert.equal(resolvePluginRoot({ CLAUDE_PLUGIN_ROOT: '${CLAUDE_PLUGIN_ROOT}', PLUGIN_ROOT: '/a/b' }), '/a/b');
+  assert.equal(resolvePluginRoot({ CLAUDE_PLUGIN_ROOT: '${CLAUDE_PLUGIN_ROOT}' }), '');
+  assert.equal(resolvePluginRoot({}), '');
+});
 
 test('buildContext returns the fallback when promptText is empty', () => {
   assert.equal(buildContext(''), FALLBACK_CONTEXT);

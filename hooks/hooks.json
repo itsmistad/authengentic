@@ -1,5 +1,5 @@
 {
-  "description": "Load authengentic rules automatically for each Codex session.",
+  "description": "Load the authengentic writing rules at session start, then keep written prose compliant. Shared by every host: the command path resolves through whichever plugin-root variable the host sets (CLAUDE_PLUGIN_ROOT or PLUGIN_ROOT), and each script also locates itself from its own file path as a fallback.",
   "hooks": {
     "SessionStart": [
       {
@@ -7,10 +7,34 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${PLUGIN_ROOT}/src/hooks/authengentic-activate.js\"",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT:-$PLUGIN_ROOT}/src/hooks/authengentic-activate.js\"",
             "timeout": 5,
             "statusMessage": "Loading authengentic...",
             "additionalContextLimit": 0
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit|mcp__.*[Cc]raft.*__craft_write|mcp__.*[Nn]otion.*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT:-$PLUGIN_ROOT}/src/hooks/lint_hook.py\"",
+            "timeout": 15,
+            "statusMessage": "authengentic: checking the prose..."
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT:-$PLUGIN_ROOT}/src/hooks/lint_hook.py\"",
+            "timeout": 15
           }
         ]
       }
