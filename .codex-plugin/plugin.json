@@ -1,6 +1,6 @@
 {
   "name": "authengentic",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Write plain, human-sounding technical and professional prose: merges SimpleEnglish's ASD-STE100 discipline with agent-style, humanizer, and sepia's AI-tell catalogs into one non-fiction ruleset.",
   "author": {
     "name": "dj.williamson"
