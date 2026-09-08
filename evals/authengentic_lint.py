@@ -94,6 +94,9 @@ LIMITS = {"procedural": 20, "descriptive": 25}
 _LC_WORDS = frozenset({"a", "an", "the", "and", "but", "or", "nor", "of", "in", "on", "to", "for", "by", "at", "with"})
 
 
+_HEADING = re.compile(r"^\s*#{1,6}\s")
+
+
 def strip_code(text):
     text = re.sub(r"```.*?```", " ", text, flags=re.S)
     text = re.sub(r"`[^`\n]+`", " CODESPAN ", text)  # one word per SE Rule 8.6
@@ -104,12 +107,27 @@ def strip_code(text):
 def sentences(text):
     """Split prose into sentence-ish units.
 
-    Markdown table rows (a line whose first non-space character is `|`,
-    including the `|---|` separator) are dropped first: a table is not
-    prose, and leaving the pipes in turns a whole table into two or three
-    giant "sentences" that trip `sentence_over_limit`.
+    Two kinds of line are dropped before the split, because neither is prose
+    and both corrupt the sentence count:
+
+      * A Markdown table row (a line whose first non-space character is `|`,
+        including the `|---|` separator). Leaving the pipes in turns a whole
+        table into two or three giant "sentences" that trip
+        `sentence_over_limit`.
+      * A Markdown ATX heading (`## ...`). A heading carries no terminal
+        punctuation, so the sentence splitter cannot break after it. The
+        heading then merges with the first sentence of the section body and
+        inflates that sentence's length (a false `sentence_over_limit`) and
+        can drag an `if` or `when` in the heading into a false
+        `trailing_condition`. Headings have their own dedicated checks
+        (`title_case_heading`, `emoji_decoration`), which read the raw text,
+        so dropping them here loses no coverage.
     """
-    lines = [ln for ln in text.splitlines() if not re.match(r"^\s*\|", ln)]
+    lines = [
+        ln
+        for ln in text.splitlines()
+        if not re.match(r"^\s*\|", ln) and not _HEADING.match(ln)
+    ]
     text = "\n".join(lines)
     text = re.sub(r"^\s*([-*]|\d+\.)\s+", "", text, flags=re.M)  # list markers
     parts = re.split(r"(?<=[.!?:])\s+", text)
@@ -140,6 +158,12 @@ def paragraph_units(text):
 
     for line in text.splitlines():
         if not line.strip():
+            flush()
+            continue
+        if _HEADING.match(line):
+            # A heading ends the unit before it and starts nothing. It is not
+            # prose, so its words never join the section body, and a dash in a
+            # heading ("## Section 1 — Words") never counts toward a cluster.
             flush()
             continue
         if _LIST_OR_ROW.match(line):
@@ -438,6 +462,28 @@ Body."""
 # must not count.
 SLOP_KEY_GATE_FIXTURE = """The API key is a keyword in the keyboard config."""
 
+# A Markdown heading has no terminal punctuation. It must not merge with the
+# first sentence of the section body. Each body sentence below is short and
+# clean on its own; only the heading+body merge would push a unit over the
+# limit or read as a trailing condition.
+HEADING_MERGE_FIXTURE = """## How to roll out the change to every region
+
+Apply the manifest to one region first and watch the error rate for ten minutes.
+
+## Roll back the change if the error rate climbs
+
+Delete the new manifest and re-apply the previous one from the archive folder."""
+
+# A heading that itself contains "if" or "when" must not create a
+# trailing_condition on the body sentence it would otherwise merge with.
+HEADING_CONDITION_FIXTURE = """## What to do when the build fails
+
+Read the last 50 lines of the log. Re-run the job once.
+
+## Escalate if the second run also fails
+
+Page the on-call engineer with the job URL and the error line."""
+
 
 def self_test():
     slop = lint(SLOP_FIXTURE, "procedural")
@@ -461,6 +507,8 @@ def self_test():
     table_long_row = lint(TABLE_LONG_ROW_FIXTURE, "procedural")
     proper_noun_heading = lint(PROPER_NOUN_HEADING_FIXTURE, "descriptive")
     slop_key_gate = lint(SLOP_KEY_GATE_FIXTURE, "descriptive")
+    heading_merge = lint(HEADING_MERGE_FIXTURE, "procedural")
+    heading_condition = lint(HEADING_CONDITION_FIXTURE, "procedural")
 
     assert "contraction" not in slop["violations"], "contraction key must not exist (contradiction 1)"
     assert slop["violations"]["sentence_over_limit"] >= 1, slop
@@ -530,10 +578,23 @@ def self_test():
         f"'key'/'gate' match exact words only, not keyword/keyboard/gateway: {slop_key_gate}"
     )
 
+    assert heading_merge["violations"]["sentence_over_limit"] == 0, (
+        f"a heading must not merge with the body sentence and inflate it: {heading_merge}"
+    )
+    assert heading_merge["violations"]["trailing_condition"] == 0, (
+        f"an 'if' in a heading must not become a trailing condition: {heading_merge}"
+    )
+    assert heading_merge["violations_total"] == 0, heading_merge
+    assert heading_condition["violations"]["trailing_condition"] == 0, (
+        f"a 'when'/'if' heading must not flag the body it precedes: {heading_condition}"
+    )
+    assert heading_condition["violations_total"] == 0, heading_condition
+
     print(
         "self-test OK:", slop["violations_total"], "violations in slop fixture, 0 in clean, "
         "0 in contractions fixture, dash cumulative + title-case + transition checks pass, "
-        "curly-quote + bold-mini-heading + emoji + filter-word + consecutive-same-start checks pass",
+        "curly-quote + bold-mini-heading + emoji + filter-word + consecutive-same-start checks pass, "
+        "heading lines do not merge with the section body",
     )
 
 

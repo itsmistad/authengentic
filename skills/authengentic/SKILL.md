@@ -465,20 +465,32 @@ Packaged skill builds ship the deterministic linter at `scripts/authengentic_lin
 Some hosts, such as the Claude apps, run no post-write hook. On those hosts this
 step is the only mechanical check.
 
-If `scripts/authengentic_lint.py` is present, run it after you write or rewrite a
-document, and before you deliver:
+Run it in one pass, not section by section. The linter reads a whole document
+correctly, headings included. Aim for one lint call on a clean draft. A draft
+that needs a fix pass takes two.
 
-1. For a file, run `python3 scripts/authengentic_lint.py --type descriptive <file>`.
-   Use `--type procedural` for a document that is mostly steps.
-2. For text you have not written to a file, pipe it: `printf '%s' "<text>" | python3 scripts/authengentic_lint.py --type descriptive -`.
-3. Read the JSON report. Every count except the three in step 4 is
+1. Do the self-check below by eye first. Fix every hit you find.
+2. Pick one `--type` for the whole document. Use `--type procedural` only for a
+   document that is steps end to end. For anything else, and for a document that
+   mixes step sections and explanation sections, use `--type descriptive`.
+3. Run the linter once. For a file:
+   `python3 scripts/authengentic_lint.py --type descriptive <file>`. For loose
+   text: `printf '%s' "<text>" | python3 scripts/authengentic_lint.py --type descriptive -`.
+4. Read the JSON report. Every count except the three in step 5 is
    fix-on-first-hit. One `banned_modal`, `semicolon`, `perfect_tense`,
    `slop_word`, or `curly_quote` is a defect to remove now.
-4. Weigh `sentence_over_limit`, `em_dash`, and `consecutive_same_start` by size.
-   A small count on one sentence is a nudge, a large count is a rewrite.
-5. Fix what the report finds, then run the self-check below.
+5. Weigh `sentence_over_limit`, `em_dash`, and `consecutive_same_start` by size.
+   A small count on one sentence is a nudge, and a large count is a rewrite.
+6. If the report shows zero violations, deliver. Do not run the linter again.
+7. If the report shows real violations, fix every instance of each in one edit
+   pass. Then run the linter once more.
 
-The linter is a regex pass, not a grammar parser. It is a floor, not a verdict.
+Do not bisect the document section by section. If a count stays non-zero after
+two full-document runs, look at that sentence by eye. The splitter can mis-parse
+an odd line.
+
+The linter is a regex pass, not a grammar parser. It is a floor, not a verdict,
+and it does not count heading lines as sentences.
 
 ## Self-check before you deliver
 

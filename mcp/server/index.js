@@ -112,7 +112,10 @@ function formatVerdict(report) {
   const weigh = entries.filter(([key, count]) => count > 0 && WEIGH_KEYS.has(key));
 
   if (fixNow.length === 0 && weigh.length === 0) {
-    return `Clean. 0 violations across ${report.words} words.`;
+    return (
+      `Clean. 0 violations across ${report.words} words. ` +
+      "Do the by-eye self-check, then deliver. No second lint call needed."
+    );
   }
 
   const parts = [];
@@ -136,7 +139,10 @@ function formatVerdict(report) {
     );
   }
 
-  parts.push("The linter is a regex floor, not a compliance verdict.");
+  parts.push(
+    "Fix every instance of each in one edit pass, then call this once more. " +
+      "The linter is a regex floor, not a compliance verdict.",
+  );
   return parts.join(" ");
 }
 
@@ -179,7 +185,7 @@ const PROMPTS = {
 };
 
 const server = new Server(
-  { name: "authengentic", version: "1.0.0" },
+  { name: "authengentic", version: "1.1.0" },
   { capabilities: { tools: {}, prompts: {} } },
 );
 
@@ -191,7 +197,9 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
         "Count deterministic authengentic violations in a piece of non-fiction text: banned modals, " +
         "perfect tense, -ing clauses, semicolons, dash clusters, slop words, title-case headings, " +
         "curly quotes, over-limit sentences, repeated sentence openers, and more. Returns the JSON " +
-        "report and a short verdict. A regex pass, not a grammar parser or a compliance verdict.",
+        "report and a short verdict. Call it once on the whole text, not section by section; the " +
+        "verdict says whether a second call is needed. A regex pass, not a grammar parser or a " +
+        "compliance verdict.",
       inputSchema: {
         type: "object",
         properties: {

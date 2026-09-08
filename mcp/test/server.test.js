@@ -5,7 +5,8 @@
  * tool separates a slop fixture from a clean one. Reuses the fixture text from
  * evals/authengentic_lint.py so the two stay in step.
  *
- * Run: node --test  (from the mcp/ directory)
+ * Run: npm test  (from the mcp/ directory). The pretest hook copies the
+ * canonical linter into linter/ first, so the server never tests a stale copy.
  */
 
 import { spawn } from "node:child_process";
@@ -119,5 +120,20 @@ test("verdict separates a graduated signal from a fix-now hit", async () => {
 
 test("verdict reports a clean text", async () => {
   const result = await callLint("The service restarts automatically after a crash.", "descriptive");
+  assert.match(result.content[0].text, /^Clean\. 0 violations/);
+  assert.match(result.content[0].text, /No second lint call needed/);
+});
+
+test("a Markdown heading does not merge with the section body", async () => {
+  /* Both body sentences are short and clean. Only a heading+body merge would
+   * push a unit over the limit or read as a trailing condition. */
+  const text =
+    "## How to roll out the change to every region\n\n" +
+    "Apply the manifest to one region first and watch the error rate for ten minutes.\n\n" +
+    "## Roll back the change if the error rate climbs\n\n" +
+    "Delete the new manifest and re-apply the previous one from the archive folder.";
+  const result = await callLint(text, "procedural");
+  const report = reportFrom(result);
+  assert.equal(report.violations_total, 0, JSON.stringify(report.violations));
   assert.match(result.content[0].text, /^Clean\. 0 violations/);
 });

@@ -8,6 +8,11 @@
   "bin": {
     "authengentic-mcp": "server/index.js"
   },
+  "scripts": {
+    "sync-linter": "cp ../evals/authengentic_lint.py linter/authengentic_lint.py && cp ../evals/slop.tsv linter/slop.tsv",
+    "pretest": "npm run sync-linter",
+    "test": "node --test"
+  },
   "files": [
     "server/",
     "linter/"
