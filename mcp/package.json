@@ -1,6 +1,6 @@
 {
   "name": "authengentic-mcp",
-  "version": "1.2.2",
+  "version": "1.2.3",
   "private": true,
   "description": "MCP server that runs the authengentic linter and exposes the review and rewrite operations as prompts.",
   "license": "MIT",

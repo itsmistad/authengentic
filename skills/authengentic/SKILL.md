@@ -17,7 +17,7 @@ description: |
 license: MIT
 compatibility: Runs in any Agent Skills client (Claude Code, Cursor, Codex, Gemini CLI, OpenCode) and as an uploaded skill in the Claude apps. The bundled linter under scripts/ needs python3.
 metadata:
-  version: "1.2.2"
+  version: "1.2.3"
   standard: ASD-STE100 Issue 9 (2025-01-15)
 ---
 
