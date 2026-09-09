@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 const fs = require('node:fs');
+const os = require('node:os');
 const path = require('node:path');
 
 // Claude Code caps hook stdout at 10,000 characters. Anything above that is
@@ -46,16 +47,41 @@ function stripFrontmatter(content) {
   return content.replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/, '');
 }
 
-function buildContext(promptText) {
+/*
+ * The learning bucket. The Stop and PostToolUse hooks write digest.md here.
+ * Honor AUTHENGENTIC_CONFIG_DIR first (tests set it), then CLAUDE_CONFIG_DIR,
+ * then ~/.claude. This must match src/hooks/learn.py.
+ */
+function digestPath(env) {
+  const base = env.AUTHENGENTIC_CONFIG_DIR || env.CLAUDE_CONFIG_DIR || path.join(os.homedir(), '.claude');
+  return path.join(base, 'authengentic', 'digest.md');
+}
+
+function readDigest(env) {
+  try {
+    return fs.readFileSync(digestPath(env), 'utf8').trim();
+  } catch (error) {
+    return '';
+  }
+}
+
+function buildContext(promptText, digestText) {
   if (!promptText) {
     return FALLBACK_CONTEXT;
   }
-  const out = HEADER + stripFrontmatter(promptText).trim();
-  if (out.length > MAX_CHARS) {
-    process.stderr.write(`authengentic hook: payload is ${out.length} characters, over the ${MAX_CHARS} cap; sending the fallback ruleset\n`);
-    return FALLBACK_CONTEXT;
+  const rules = HEADER + stripFrontmatter(promptText).trim();
+  const digest = (digestText || '').trim();
+  const withDigest = digest ? `${rules}\n\n---\n\n${digest}` : rules;
+  if (withDigest.length <= MAX_CHARS) {
+    return withDigest;
   }
-  return out;
+  // The digest is the first thing to drop, then the whole payload.
+  if (rules.length <= MAX_CHARS) {
+    process.stderr.write(`authengentic hook: payload with the digest is ${withDigest.length} characters, over the ${MAX_CHARS} cap; sending the rules without the digest\n`);
+    return rules;
+  }
+  process.stderr.write(`authengentic hook: payload is ${rules.length} characters, over the ${MAX_CHARS} cap; sending the fallback ruleset\n`);
+  return FALLBACK_CONTEXT;
 }
 
 /*
@@ -76,7 +102,8 @@ function resolvePluginRoot(env) {
 
 function main() {
   const pluginRoot = resolvePluginRoot(process.env);
-  process.stdout.write(buildContext(readFirstFile(ruleCandidates(pluginRoot, __dirname))));
+  const rules = readFirstFile(ruleCandidates(pluginRoot, __dirname));
+  process.stdout.write(buildContext(rules, readDigest(process.env)));
 }
 
 if (require.main === module) {
@@ -87,6 +114,8 @@ module.exports = {
   FALLBACK_CONTEXT,
   MAX_CHARS,
   buildContext,
+  digestPath,
+  readDigest,
   ruleCandidates,
   readFirstFile,
   resolvePluginRoot,

@@ -21,6 +21,7 @@ Usage:
   python3 authengentic_lint.py --self-test
 """
 import json
+import os
 import pathlib
 import re
 import sys
@@ -59,11 +60,35 @@ in as false positives."""
 _SLOP_EXACT_TERMS = frozenset({"key", "gate"})
 
 
-def slop_pattern():
-    """Union of the measured core list and evals/slop.tsv (term, source, swap).
+def _learned_slop_terms():
+    """Extra dead words the /authengentic-learn command promoted. Read from
+    `${AUTHENGENTIC_CONFIG_DIR or CLAUDE_CONFIG_DIR or ~/.claude}/
+    authengentic/learned.json`. A missing or malformed file returns
+    nothing. Tests set AUTHENGENTIC_CONFIG_DIR to isolate this.
+    """
+    if os.environ.get("AUTHENGENTIC_DISABLE_LEARN"):
+        return []
+    base = os.environ.get("AUTHENGENTIC_CONFIG_DIR") or os.environ.get("CLAUDE_CONFIG_DIR")
+    root = pathlib.Path(base) if base else pathlib.Path.home() / ".claude"
+    try:
+        raw = json.loads((root / "authengentic" / "learned.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return []
+    if not isinstance(raw, dict) or not isinstance(raw.get("slop"), list):
+        return []
+    return [
+        item.strip().lower()
+        for item in raw["slop"]
+        if isinstance(item, str) and item.strip()
+    ]
 
-    Falls back to the core list when the file is absent. Comment lines
-    (leading '#') and blank lines are skipped.
+
+def slop_pattern():
+    """Union of the measured core list, evals/slop.tsv (term, source, swap),
+    and the learned terms from learned.json.
+
+    Falls back to the core list when both sources are empty. Comment lines
+    (leading '#') and blank lines in the TSV are skipped.
     """
     terms = []
     if SLOP_TSV.exists():
@@ -72,13 +97,17 @@ def slop_pattern():
                 continue
             term = line.split("\t")[0].strip().lower()
             if term:
-                pattern = re.escape(term).replace(r"\ ", r"\s+")
-                if term not in _SLOP_EXACT_TERMS:
-                    pattern += r"\w*"
-                terms.append(pattern)
-    if not terms:
+                terms.append(term)
+    terms.extend(_learned_slop_terms())
+    patterns = []
+    for term in terms:
+        pattern = re.escape(term).replace(r"\ ", r"\s+")
+        if term not in _SLOP_EXACT_TERMS:
+            pattern += r"\w*"
+        patterns.append(pattern)
+    if not patterns:
         return SLOP_CORE
-    return re.compile(SLOP_CORE.pattern[:-len(r")\b")] + "|" + "|".join(terms) + r")\b", re.I)
+    return re.compile(SLOP_CORE.pattern[:-len(r")\b")] + "|" + "|".join(patterns) + r")\b", re.I)
 
 
 SLOP = slop_pattern()
@@ -486,6 +515,10 @@ Page the on-call engineer with the job URL and the error line."""
 
 
 def self_test():
+    # The self-test must not depend on a machine's learned.json.
+    os.environ["AUTHENGENTIC_DISABLE_LEARN"] = "1"
+    global SLOP
+    SLOP = slop_pattern()
     slop = lint(SLOP_FIXTURE, "procedural")
     clean = lint(CLEAN_FIXTURE, "procedural")
     contractions = lint(CONTRACTION_FIXTURE, "descriptive")

@@ -69,6 +69,18 @@ One stop can carry the reply note and a file block together. The `decision` fiel
 
 Notion support ships unverified. The Notion MCP was absent from the build machine, so its tool names come from the Notion MCP docs. Test it against a live workspace first.
 
+## How the plugin learns
+
+After a hook prints a non-zero violation summary, it folds the counts into a profile under `${CLAUDE_CONFIG_DIR:-~/.claude}/authengentic/`. The plugin never writes inside its own folder, because that folder is a cache Claude Code can wipe.
+
+- `observations.jsonl` — one line per rule per event, capped at 2000 lines.
+- `profile.json` — a score per rule. The score halves every 30 days, so the digest tracks recent habits.
+- `digest.md` — regenerated on every event. It ranks the rules you break most and names the words you repeat. The SessionStart hook injects it after `rules/core.md`.
+
+`digest.md` never adds or removes a rule. It re-ranks your attention over the frozen core, so it carries no false-positive risk.
+
+The `/authengentic-learn` command finds words and phrases the regex missed. It reads your recent replies, asks a Haiku subagent for terms that break the rules, and writes them to `candidates.jsonl`. A term seen a second time moves to `learned.json`. The linter and the hook read `learned.json` and flag its terms like the built-in lists.
+
 ## What's different from SimpleEnglish
 
 authengentic overrules its parent on four points. Each is stated in full in [SKILL.md, "Where authengentic differs from its sources"](skills/authengentic/SKILL.md#where-authengentic-differs-from-its-sources).

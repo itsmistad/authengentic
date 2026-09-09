@@ -33,6 +33,11 @@ Stop: a reply-register note and a file check.
 
 One payload can carry the reply note and a file block together.
 
+After a non-zero summary, both hooks call `learn.record()`. It folds the
+violation counts into a profile under the learning bucket and regenerates
+`digest.md`. See `src/hooks/learn.py`. Learning never raises: a failure
+there must not break the hook.
+
 The `decision` field is the only lever that makes a Stop hook enforce.
 Without it the hook can print a note, but the turn already ended and the
 model has moved on. `{"decision": "block", "reason": ...}` tells Claude
@@ -91,8 +96,31 @@ NOTION_TEXT_KEYS = {
     "rich_text", "caption", "name", "value",
 }
 
-OPENERS = re.compile(r"^\s*(certainly|great question|you're absolutely right|sure[,!]|absolutely[,!])", re.I)
-CLOSERS = re.compile(r"(i hope this helps|let me know if|feel free to)", re.I)
+_OPENER_TERMS = [
+    "certainly", "great question", "you're absolutely right", r"sure[,!]", r"absolutely[,!]",
+]
+_CLOSER_TERMS = ["i hope this helps", "let me know if", "feel free to"]
+
+
+def _load_learned():
+    """Terms the /authengentic-learn command promoted. Read once at import.
+    A term added mid-session takes effect at the next session start."""
+    try:
+        import learn  # noqa: WPS433
+        return learn.load_learned()
+    except Exception:  # noqa: BLE001
+        return {}
+
+
+_LEARNED = _load_learned()
+OPENERS = re.compile(
+    r"^\s*(" + "|".join(_OPENER_TERMS + [re.escape(t) for t in _LEARNED.get("openers", [])]) + r")",
+    re.I,
+)
+CLOSERS = re.compile(
+    r"(" + "|".join(_CLOSER_TERMS + [re.escape(t) for t in _LEARNED.get("closers", [])]) + r")",
+    re.I,
+)
 
 
 def load_linter():
@@ -357,6 +385,7 @@ def post_tool_use(event):
         f"authengentic: this write adds violations over the baseline ({detail}). "
         f"Refactor the passage you changed before you deliver.\n"
     )
+    _learn_from(lint, session, "post_tool_use", [_current_text(state, k) for k, _, _ in flagged])
     return 2
 
 
@@ -478,6 +507,25 @@ def _file_release_message(reports):
     )
 
 
+def _learn_from(lint, session, source, texts):
+    """Feed one or more violating texts to the learning module. Never
+    raises: learning must not break a hook."""
+    try:
+        import learn  # noqa: WPS433
+    except Exception:  # noqa: BLE001
+        return
+    for text in texts:
+        if not (text or "").strip():
+            continue
+        body = strip_code(text)
+        extras = {
+            "slop_word": _unique_lower(lint.SLOP.findall(body)),
+            "trailing_condition": _trailing_condition_starts(lint, body),
+            "synonym_rotation": _synonym_rotation_maps(lint, body),
+        }
+        learn.record(source, lint, body, session, extras)
+
+
 def _emit(notes, block_reason):
     payload = {}
     if notes:
@@ -507,6 +555,8 @@ def stop(event):
     problems = _reply_problems(event, lint)
     if problems:
         notes.append("🧠: " + " / ".join(problems) + ".")
+        if lint is not None:
+            _learn_from(lint, session, "stop", [event.get("last_assistant_message") or ""])
 
     # --- file check (one fix pass) ---------------------------------------
     # If a recorded target still adds violations over its baseline, block

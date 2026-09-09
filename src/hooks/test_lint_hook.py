@@ -22,6 +22,8 @@ def run_hook(event, state_dir=None):
     env = dict(os.environ)
     if state_dir:
         env["AUTHENGENTIC_STATE_DIR"] = str(state_dir)
+        # Keep learning writes inside the test's temp tree.
+        env["AUTHENGENTIC_CONFIG_DIR"] = str(state_dir)
     proc = subprocess.run(
         [sys.executable, str(HOOK)],
         input=json.dumps(event),
@@ -207,6 +209,21 @@ class ReplyNoteTests(unittest.TestCase):
         payload = json.loads(stop(self.state, session="sr", reply=bad).stdout)
         msg = payload["systemMessage"]
         self.assertIn('synonym rotation: "check -> verify, confirm", "config -> settings"', msg)
+
+    def test_a_dirty_reply_writes_the_learning_digest(self):
+        bad = "You should leverage the robust comprehensive pipeline; it is powerful."
+        stop(self.state, session="lrn", reply=bad)
+        digest = pathlib.Path(self.state) / "authengentic" / "digest.md"
+        self.assertTrue(digest.exists(), digest)
+        self.assertIn("slop word", digest.read_text(encoding="utf-8"))
+
+    def test_learned_slop_term_is_flagged(self):
+        auth = pathlib.Path(self.state) / "authengentic"
+        auth.mkdir(parents=True, exist_ok=True)
+        (auth / "learned.json").write_text(json.dumps({"slop": ["showcase"]}), encoding="utf-8")
+        payload = json.loads(stop(self.state, session="ls", reply="This showcase is a showcase.").stdout)
+        self.assertIn("slop word", payload["systemMessage"])
+        self.assertIn("showcase", payload["systemMessage"])
 
 
 class BaselineScopingTests(unittest.TestCase):
