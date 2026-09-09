@@ -271,15 +271,24 @@ def _norm_category(value):
 
 
 def _read_candidates():
-    rows = []
+    """Every valid row, one per line. Skip a blank or malformed line so one
+    bad line cannot wipe the file's good rows."""
     try:
-        for line in _path("candidates.jsonl").read_text(encoding="utf-8").splitlines():
-            line = line.strip()
-            if line:
-                rows.append(json.loads(line))
-    except (OSError, ValueError):
+        lines = _path("candidates.jsonl").read_text(encoding="utf-8").splitlines()
+    except OSError:
         return []
-    return [r for r in rows if isinstance(r, dict) and r.get("term") and r.get("category")]
+    rows = []
+    for line in lines:
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            row = json.loads(line)
+        except ValueError:
+            continue
+        if isinstance(row, dict) and row.get("term") and row.get("category"):
+            rows.append(row)
+    return rows
 
 
 def _write_candidates(rows):

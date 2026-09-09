@@ -99,6 +99,18 @@ class LearnTests(unittest.TestCase):
         self.assertEqual(result["added"], [])
         self.assertEqual((self.auth / "candidates.jsonl").read_text().strip(), "")
 
+    def test_one_bad_line_does_not_wipe_the_candidate_file(self):
+        self.auth.mkdir(parents=True, exist_ok=True)
+        (self.auth / "candidates.jsonl").write_text(
+            '{"term": "realone", "category": "slop", "first_seen": 1}\n'
+            "NOT JSON\n"
+            '{"term": "another", "category": "openers", "first_seen": 2}\n'
+        )
+        result = learn.ingest([{"term": "realone", "category": "slop"}])
+        self.assertEqual(result["promoted"], ["slop:realone"])
+        remaining = [json.loads(x) for x in (self.auth / "candidates.jsonl").read_text().splitlines()]
+        self.assertEqual([r["term"] for r in remaining], ["another"])
+
     def test_ingest_skips_an_unknown_category(self):
         result = learn.ingest([{"term": "whatever", "category": "grammar"}])
         self.assertEqual(result, {"promoted": [], "added": [], "ignored": []})
