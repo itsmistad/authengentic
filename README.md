@@ -76,10 +76,12 @@ After a hook prints a non-zero violation summary, it folds the counts into a pro
 - `observations.jsonl` — one line per rule per event, capped at 2000 lines.
 - `profile.json` — a score per rule. The score halves every 30 days, so the digest tracks recent habits.
 - `digest.md` — regenerated on every event. It ranks the rules you break most and names the words you repeat. The SessionStart hook injects it after `rules/core.md`.
+- `candidates.jsonl` — terms the `/authengentic-learn` skill saw once, waiting for a second sighting.
+- `learned.json` — promoted terms, grouped by category. The linter and the hook read this file at import.
 
 `digest.md` never adds or removes a rule. It re-ranks your attention over the frozen core, so it carries no false-positive risk.
 
-The `/authengentic-learn` command finds words and phrases the regex missed. It reads your recent replies, asks a Haiku subagent for terms that break the rules, and writes them to `candidates.jsonl`. A term seen a second time moves to `learned.json`. The linter and the hook read `learned.json` and flag its terms like the built-in lists.
+The `/authengentic-learn` skill finds words and phrases the regex missed. It reads your recent replies, asks a Haiku subagent for terms that break the rules, and writes them to `candidates.jsonl` in the same bucket. A term seen a second time moves to `learned.json`. The linter and the hook read `learned.json` and flag its terms like the built-in lists. Run it by name, with an argument for how many recent replies to scan (default 5) or `all`.
 
 ## What's different from SimpleEnglish
 
