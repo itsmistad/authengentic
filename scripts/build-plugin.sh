@@ -41,6 +41,8 @@ for f in \
   evals/authengentic_lint.py \
   evals/slop.tsv \
   rules/core.md \
+  src/hooks/learn.py \
+  commands/authengentic-learn.md \
   skills/authengentic/SKILL.md \
   output-styles/authengentic.md \
   hooks/hooks.json; do

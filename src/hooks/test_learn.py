@@ -76,6 +76,46 @@ class LearnTests(unittest.TestCase):
         self.assertEqual(got["openers"], ["to be clear"])
         self.assertNotIn("junk", got)
 
+    def test_ingest_adds_a_new_candidate(self):
+        result = learn.ingest([{"term": "Showcase", "category": "slop word", "example": "a showcase"}])
+        self.assertEqual(result["added"], ["slop:showcase"])
+        rows = [json.loads(x) for x in (self.auth / "candidates.jsonl").read_text().splitlines()]
+        self.assertEqual(rows[0]["term"], "showcase")
+        self.assertEqual(rows[0]["category"], "slop")
+
+    def test_ingest_promotes_a_repeat_and_clears_the_candidate(self):
+        learn.ingest([{"term": "showcase", "category": "slop"}])
+        result = learn.ingest([{"term": "showcase", "category": "dead words"}])
+        self.assertEqual(result["promoted"], ["slop:showcase"])
+        learned = json.loads((self.auth / "learned.json").read_text())
+        self.assertIn("showcase", learned["slop"])
+        self.assertEqual((self.auth / "candidates.jsonl").read_text().strip(), "")
+
+    def test_ingest_ignores_an_already_learned_term(self):
+        learn.ingest([{"term": "showcase", "category": "slop"}])
+        learn.ingest([{"term": "showcase", "category": "slop"}])
+        result = learn.ingest([{"term": "showcase", "category": "slop"}])
+        self.assertEqual(result["ignored"], ["slop:showcase"])
+        self.assertEqual(result["added"], [])
+        self.assertEqual((self.auth / "candidates.jsonl").read_text().strip(), "")
+
+    def test_ingest_skips_an_unknown_category(self):
+        result = learn.ingest([{"term": "whatever", "category": "grammar"}])
+        self.assertEqual(result, {"promoted": [], "added": [], "ignored": []})
+
+    def test_learned_term_extends_the_linter(self):
+        (self.auth).mkdir(parents=True, exist_ok=True)
+        (self.auth / "learned.json").write_text(json.dumps({"slop": ["showcase"]}))
+        import importlib
+        importlib.reload(lint)
+        try:
+            report = lint.lint("This showcase shows the feature.", "descriptive")
+            self.assertGreaterEqual(report["violations"]["slop_word"], 1)
+        finally:
+            os.environ["AUTHENGENTIC_DISABLE_LEARN"] = "1"
+            importlib.reload(lint)
+            os.environ.pop("AUTHENGENTIC_DISABLE_LEARN", None)
+
     def test_observations_are_capped(self):
         learn.OBSERVATION_CAP = 5
         try:

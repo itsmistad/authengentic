@@ -25,6 +25,7 @@ Every function swallows its own errors. Learning must never break a hook.
 import json
 import os
 import pathlib
+import sys
 import time
 
 OBSERVATION_CAP = 2000
@@ -220,21 +221,22 @@ def regenerate_digest():
         if not ranked and not learned_lines:
             _path("digest.md").unlink(missing_ok=True)
             return
-        lines = [
-            "AUTHENGENTIC — YOUR RECURRING MISTAKES HERE",
-            "",
-            "This list comes from your own violations in this environment, ranked "
-            "by a decayed count. Check the top items before you send.",
-            "",
-        ]
-        for index, (key, value, tokens) in enumerate(ranked, start=1):
-            label = key.replace("_", " ")
-            guide = RULE_GUIDANCE.get(key, "")
-            seen = _top_tokens(tokens)
-            tail = f" You keep writing: {seen}." if seen else ""
-            lines.append(f"{index}. {label} ({round(value)}). {guide}{tail}".rstrip())
-        if learned_lines:
+        lines = ["AUTHENGENTIC — YOUR RECURRING MISTAKES HERE", ""]
+        if ranked:
+            lines.append(
+                "This list comes from your own violations in this environment, ranked "
+                "by a decayed count. Check the top items before you send."
+            )
             lines.append("")
+            for index, (key, value, tokens) in enumerate(ranked, start=1):
+                label = key.replace("_", " ")
+                guide = RULE_GUIDANCE.get(key, "")
+                seen = _top_tokens(tokens)
+                tail = f" You keep writing: {seen}." if seen else ""
+                lines.append(f"{index}. {label} ({round(value)}). {guide}{tail}".rstrip())
+        if learned_lines:
+            if ranked:
+                lines.append("")
             lines.append("Terms the linter learned here. These now flag like the built-in lists.")
             lines.append("")
             lines.extend(learned_lines)
@@ -257,7 +259,108 @@ def read_digest():
         return ""
 
 
-if __name__ == "__main__":
-    # Manual regeneration: python3 learn.py
+"""Candidate discovery. The /authengentic-learn command finds terms the
+regex misses and hands them here. A term already learned is dropped. A
+term already a candidate is promoted to learned.json and removed from
+candidates.jsonl. A new term becomes a candidate."""
+
+_CATEGORY_ALIASES = {
+    "slop": "slop", "slop word": "slop", "slop_word": "slop",
+    "dead word": "slop", "dead words": "slop", "filler": "slop",
+    "opener": "openers", "openers": "openers", "filler opener": "openers",
+    "closer": "closers", "closers": "closers", "filler closer": "closers",
+}
+
+
+def _norm_term(value):
+    return " ".join(str(value or "").lower().split())
+
+
+def _norm_category(value):
+    return _CATEGORY_ALIASES.get(_norm_term(value))
+
+
+def _read_candidates():
+    rows = []
+    try:
+        for line in _path("candidates.jsonl").read_text(encoding="utf-8").splitlines():
+            line = line.strip()
+            if line:
+                rows.append(json.loads(line))
+    except (OSError, ValueError):
+        return []
+    return [r for r in rows if isinstance(r, dict) and r.get("term") and r.get("category")]
+
+
+def _write_candidates(rows):
+    text = "".join(json.dumps(row) + "\n" for row in rows)
+    _write_json_text("candidates.jsonl", text)
+
+
+def ingest(findings):
+    """Apply the promotion rules to a list of {term, category, example?}.
+    Return {promoted, added, ignored} lists of "category:term" strings."""
+    learned = _read_json("learned.json", {})
+    if not isinstance(learned, dict):
+        learned = {}
+    for cat in LEARNED_CATEGORIES:
+        if not isinstance(learned.get(cat), list):
+            learned[cat] = []
+    candidates = _read_candidates()
+    cand_index = {(_norm_category(r["category"]), _norm_term(r["term"])) for r in candidates}
+
+    promoted, added, ignored = [], [], []
+    now = time.time()
+    for finding in findings or []:
+        term = _norm_term((finding or {}).get("term"))
+        cat = _norm_category((finding or {}).get("category"))
+        if not term or not cat:
+            continue
+        tag = f"{cat}:{term}"
+        if term in learned[cat]:
+            ignored.append(tag)
+            continue
+        if (cat, term) in cand_index:
+            learned[cat].append(term)
+            candidates = [
+                r for r in candidates
+                if not (_norm_category(r["category"]) == cat and _norm_term(r["term"]) == term)
+            ]
+            cand_index.discard((cat, term))
+            promoted.append(tag)
+            continue
+        candidates.append({
+            "term": term,
+            "category": cat,
+            "first_seen": round(now, 3),
+            "example": str((finding or {}).get("example", ""))[:280],
+        })
+        cand_index.add((cat, term))
+        added.append(tag)
+
+    for cat in LEARNED_CATEGORIES:
+        learned[cat] = sorted(set(learned[cat]))
+    _write_json("learned.json", learned)
+    _write_candidates(candidates)
+    regenerate_digest()
+    return {"promoted": promoted, "added": added, "ignored": ignored}
+
+
+def _cli():
+    args = sys.argv[1:]
+    if args and args[0] == "ingest":
+        payload = json.load(sys.stdin)
+        findings = payload if isinstance(payload, list) else payload.get("findings", [])
+        result = ingest(findings)
+        print(json.dumps(result, indent=2))
+        return
+    if args and args[0] == "digest":
+        regenerate_digest()
+        print(read_digest())
+        return
     regenerate_digest()
     print(str(_path("digest.md")))
+
+
+if __name__ == "__main__":
+    _cli()
