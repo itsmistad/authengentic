@@ -10,7 +10,7 @@ description: >
 license: MIT
 compatibility: Runs in Claude Code with the authengentic plugin installed. Needs python3 for src/hooks/learn.py.
 metadata:
-  version: "1.2.7"
+  version: "1.3.0"
 ---
 
 <!-- authengentic-lint: ignore -->
