@@ -48,13 +48,17 @@ function stripFrontmatter(content) {
 }
 
 /*
- * The learning bucket. The Stop and PostToolUse hooks write digest.md here.
+ * The learning bucket. learn.py writes digest.md and learned.json here.
  * Honor AUTHENGENTIC_CONFIG_DIR first (tests set it), then CLAUDE_CONFIG_DIR,
  * then ~/.claude. This must match src/hooks/learn.py.
  */
-function digestPath(env) {
+function bucketFile(env, name) {
   const base = env.AUTHENGENTIC_CONFIG_DIR || env.CLAUDE_CONFIG_DIR || path.join(os.homedir(), '.claude');
-  return path.join(base, 'authengentic', 'digest.md');
+  return path.join(base, 'authengentic', name);
+}
+
+function digestPath(env) {
+  return bucketFile(env, 'digest.md');
 }
 
 function readDigest(env) {
@@ -65,19 +69,64 @@ function readDigest(env) {
   }
 }
 
-function buildContext(promptText, digestText) {
+const LEARNED_LABELS = {
+  slop: 'Dead words to delete',
+  openers: 'Filler openers to avoid',
+  closers: 'Filler closers to avoid',
+};
+
+/*
+ * Render learned.json as a rule extension the model reads at session start,
+ * in the same shape as the core lists. The /authengentic-learn skill writes
+ * learned.json. Read it fresh here so a promotion shows on the next session
+ * with no build step.
+ */
+function readLearnedBlock(env) {
+  let raw;
+  try {
+    raw = JSON.parse(fs.readFileSync(bucketFile(env, 'learned.json'), 'utf8'));
+  } catch (error) {
+    return '';
+  }
+  if (!raw || typeof raw !== 'object') {
+    return '';
+  }
+  const lines = [];
+  for (const key of ['slop', 'openers', 'closers']) {
+    const terms = Array.isArray(raw[key])
+      ? raw[key].filter((term) => typeof term === 'string' && term.trim())
+      : [];
+    if (terms.length) {
+      lines.push(`- ${LEARNED_LABELS[key]}: ${terms.join(', ')}`);
+    }
+  }
+  if (!lines.length) {
+    return '';
+  }
+  return ['LEARNED IN THIS ENVIRONMENT. Treat these like the built-in lists above.', '', ...lines].join('\n');
+}
+
+function buildContext(promptText, learnedText, digestText) {
   if (!promptText) {
     return FALLBACK_CONTEXT;
   }
   const rules = HEADER + stripFrontmatter(promptText).trim();
+  const learned = (learnedText || '').trim();
   const digest = (digestText || '').trim();
-  const withDigest = digest ? `${rules}\n\n---\n\n${digest}` : rules;
-  if (withDigest.length <= MAX_CHARS) {
-    return withDigest;
+  const join = (parts) => parts.filter(Boolean).join('\n\n---\n\n');
+
+  const full = join([rules, learned, digest]);
+  if (full.length <= MAX_CHARS) {
+    return full;
   }
-  // The digest is the first thing to drop, then the whole payload.
+  // Drop the digest first, then the learned block, then fall back.
+  const noDigest = join([rules, learned]);
+  if (noDigest.length <= MAX_CHARS) {
+    process.stderr.write(`authengentic hook: payload is ${full.length} characters, over the ${MAX_CHARS} cap; sending the rules and the learned block without the digest\n`);
+    return noDigest;
+  }
   if (rules.length <= MAX_CHARS) {
-    process.stderr.write(`authengentic hook: payload with the digest is ${withDigest.length} characters, over the ${MAX_CHARS} cap; sending the rules without the digest\n`);
+    process.stderr.write(`authengentic hook: payload is ${noDigest.length} characters, over the ${MAX_CHARS} cap; sending the rules alone\n`);
     return rules;
   }
   process.stderr.write(`authengentic hook: payload is ${rules.length} characters, over the ${MAX_CHARS} cap; sending the fallback ruleset\n`);
@@ -103,7 +152,7 @@ function resolvePluginRoot(env) {
 function main() {
   const pluginRoot = resolvePluginRoot(process.env);
   const rules = readFirstFile(ruleCandidates(pluginRoot, __dirname));
-  process.stdout.write(buildContext(rules, readDigest(process.env)));
+  process.stdout.write(buildContext(rules, readLearnedBlock(process.env), readDigest(process.env)));
 }
 
 if (require.main === module) {
@@ -116,6 +165,7 @@ module.exports = {
   buildContext,
   digestPath,
   readDigest,
+  readLearnedBlock,
   ruleCandidates,
   readFirstFile,
   resolvePluginRoot,

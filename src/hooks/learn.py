@@ -207,39 +207,29 @@ def _top_tokens(tokens, limit=4):
 
 
 def regenerate_digest():
-    """Rewrite digest.md from profile.json and learned.json. Remove it
-    when there is nothing to say."""
+    """Rewrite digest.md from profile.json: the rules you break most, with
+    the words you repeat. Remove the file when there is nothing to rank.
+    The learned terms are a separate injection. The SessionStart hook reads
+    learned.json for them, so they do not belong here."""
     try:
         now = time.time()
         ranked = _ranked_rules(now)
-        learned = load_learned()
-        learned_lines = [
-            f"- {cat}: {', '.join(terms)}"
-            for cat, terms in learned.items()
-            if terms
-        ]
-        if not ranked and not learned_lines:
+        if not ranked:
             _path("digest.md").unlink(missing_ok=True)
             return
-        lines = ["AUTHENGENTIC — YOUR RECURRING MISTAKES HERE", ""]
-        if ranked:
-            lines.append(
-                "This list comes from your own violations in this environment, ranked "
-                "by a decayed count. Check the top items before you send."
-            )
-            lines.append("")
-            for index, (key, value, tokens) in enumerate(ranked, start=1):
-                label = key.replace("_", " ")
-                guide = RULE_GUIDANCE.get(key, "")
-                seen = _top_tokens(tokens)
-                tail = f" You keep writing: {seen}." if seen else ""
-                lines.append(f"{index}. {label} ({round(value)}). {guide}{tail}".rstrip())
-        if learned_lines:
-            if ranked:
-                lines.append("")
-            lines.append("Terms the linter learned here. These now flag like the built-in lists.")
-            lines.append("")
-            lines.extend(learned_lines)
+        lines = [
+            "AUTHENGENTIC — YOUR RECURRING MISTAKES HERE",
+            "",
+            "This list comes from your own violations in this environment, ranked "
+            "by a decayed count. Check the top items before you send.",
+            "",
+        ]
+        for index, (key, value, tokens) in enumerate(ranked, start=1):
+            label = key.replace("_", " ")
+            guide = RULE_GUIDANCE.get(key, "")
+            seen = _top_tokens(tokens)
+            tail = f" You keep writing: {seen}." if seen else ""
+            lines.append(f"{index}. {label} ({round(value)}). {guide}{tail}".rstrip())
         _write_json_text("digest.md", "\n".join(lines) + "\n")
     except Exception:  # noqa: BLE001
         return

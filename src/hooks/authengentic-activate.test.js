@@ -12,22 +12,51 @@ const {
   buildContext,
   digestPath,
   readDigest,
+  readLearnedBlock,
   ruleCandidates,
   resolvePluginRoot,
   stripFrontmatter,
 } = require('./authengentic-activate.js');
 
-test('buildContext appends the digest after a separator', () => {
-  const out = buildContext('---\nname: x\n---\nWrite plainly.', 'YOUR RECURRING MISTAKES\n1. slop word (6).');
-  assert.match(out, /Write plainly\.\n\n---\n\nYOUR RECURRING MISTAKES/);
+test('buildContext appends the learned block then the digest, each after a separator', () => {
+  const out = buildContext(
+    '---\nname: x\n---\nWrite plainly.',
+    'LEARNED IN THIS ENVIRONMENT.\n- Dead words to delete: showcase',
+    'YOUR RECURRING MISTAKES\n1. slop word (6).',
+  );
+  assert.match(out, /Write plainly\.\n\n---\n\nLEARNED IN THIS ENVIRONMENT\.[\s\S]*\n\n---\n\nYOUR RECURRING MISTAKES/);
 });
 
-test('buildContext drops the digest when the combined payload is over the cap', () => {
-  const rules = '---\nname: x\n---\n' + 'word '.repeat(1000);
+test('buildContext drops the digest first when over the cap, keeps the learned block', () => {
+  const rules = '---\nname: x\n---\n' + 'word '.repeat(500);
+  const learned = 'LEARNED: showcase';
   const huge = 'x'.repeat(MAX_CHARS);
-  const out = buildContext(rules, huge);
+  const out = buildContext(rules, learned, huge);
   assert.ok(!out.includes('xxxx'));
   assert.match(out, /word word/);
+  assert.match(out, /LEARNED: showcase/);
+});
+
+test('buildContext drops the learned block too when the rules alone fit', () => {
+  const rules = '---\nname: x\n---\n' + 'word '.repeat(500);
+  const out = buildContext(rules, 'y'.repeat(MAX_CHARS), 'z'.repeat(MAX_CHARS));
+  assert.match(out, /word word/);
+  assert.ok(!out.includes('yyyy'));
+  assert.ok(!out.includes('zzzz'));
+});
+
+test('readLearnedBlock renders learned.json, or empty when there is nothing', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'authengentic-'));
+  fs.mkdirSync(path.join(dir, 'authengentic'));
+  const file = path.join(dir, 'authengentic', 'learned.json');
+  assert.equal(readLearnedBlock({ AUTHENGENTIC_CONFIG_DIR: dir }), '');
+  fs.writeFileSync(file, JSON.stringify({ slop: ['showcase', 'boasts'], openers: [], closers: ['cheers'] }));
+  const block = readLearnedBlock({ AUTHENGENTIC_CONFIG_DIR: dir });
+  assert.match(block, /Dead words to delete: showcase, boasts/);
+  assert.match(block, /Filler closers to avoid: cheers/);
+  assert.doesNotMatch(block, /openers/i);
+  fs.writeFileSync(file, JSON.stringify({ slop: [], openers: [], closers: [] }));
+  assert.equal(readLearnedBlock({ AUTHENGENTIC_CONFIG_DIR: dir }), '');
 });
 
 test('readDigest returns an empty string when the file is absent', () => {

@@ -77,7 +77,7 @@ After a hook prints a non-zero violation summary, it folds the counts into a pro
 - `profile.json` — a score per rule. The score halves every 30 days, so the digest tracks recent habits.
 - `digest.md` — regenerated on every event. It ranks the rules you break most and names the words you repeat. The SessionStart hook injects it after `rules/core.md`.
 - `candidates.jsonl` — terms the `/authengentic-learn` skill saw once, waiting for a second sighting.
-- `learned.json` — promoted terms, grouped by category. The linter and the hook read this file at import.
+- `learned.json` — promoted terms, grouped by category. Two readers use it. The linter and the reply check extend their built-in lists from it. At session start the hook renders it between `rules/core.md` and `digest.md`, so a learned term reaches the model the way the core lists do.
 
 `digest.md` never adds or removes a rule. It re-ranks your attention over the frozen core, so it carries no false-positive risk.
 
