@@ -83,6 +83,19 @@ class PostToolUseLocalTests(unittest.TestCase):
         proc = post(self.state, "Edit", {"file_path": path})
         self.assertEqual(proc.returncode, 2, proc.stderr)
 
+    def test_rules_directory_file_is_ignored(self):
+        d = pathlib.Path(tempfile.mkdtemp()) / "rules"
+        d.mkdir()
+        path = str(d / "core.md")
+        pathlib.Path(path).write_text(SLOP, encoding="utf-8")
+        proc = post(self.state, "Write", {"file_path": path, "content": SLOP})
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+
+    def test_ignore_marker_file_is_skipped(self):
+        body = "<!-- authengentic-lint: ignore -->\n" + SLOP
+        proc = post(self.state, "Write", {"file_path": write_md(body), "content": body})
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+
     def test_contractions_do_not_trigger_violation(self):
         body = "It's done. The build didn't fail this time, and we're glad.\n"
         proc = post(self.state, "Write", {"file_path": write_md(body), "content": body})

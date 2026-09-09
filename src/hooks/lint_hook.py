@@ -11,7 +11,9 @@ extensionless file that reads as prose. Doc apps are Craft and Notion
 (see the MCP tool names in `.claude-plugin/plugin.json`). The hook lints
 the text the write produced, compares the count to the baseline, and when
 the write adds violations it prints a summary to stderr and records the
-target. Exit 2 is advisory: the tool already ran.
+target. Exit 2 is advisory: the tool already ran. A rule source is
+skipped: a file under a `rules/` directory, or one whose first 1000
+characters carry the marker `authengentic-lint: ignore`.
 
 Stop: a reply-register note and a file check.
 
@@ -22,7 +24,7 @@ Stop: a reply-register note and a file check.
    sentence-length rules. It names each slop word, quotes the first two
    words of each trailing if/when clause, and maps each synonym rotation
    as "<first> -> <alt>, <alt>". Prevention lives in the pre-send
-   checklist in prompts/system-prompt.md.
+   checklist in rules/core.md.
 2. The file check re-scores every recorded target against its baseline. A
    target still over baseline blocks once with `{"decision": "block",
    "reason": ...}` and `suppressOutput` set. That is one fix pass. If the
@@ -170,6 +172,20 @@ def _clear_state(session):
 """Content extraction. Turn a write tool call into a list of
 (key, text, is_remote) targets to score."""
 
+# A rule source is not a deliverable. It must name the banned words to
+# teach them, so linting it against a zero baseline is always a false
+# positive. Skip a file under a `rules/` directory, and skip any file
+# whose first 1000 characters carry the marker `authengentic-lint: ignore`.
+IGNORE_MARKER = "authengentic-lint: ignore"
+IGNORE_DIR_SEGMENTS = {"rules"}
+
+
+def _is_ignored(path, text):
+    parts = {seg.lower() for seg in pathlib.Path(path).parts}
+    if parts & IGNORE_DIR_SEGMENTS:
+        return True
+    return IGNORE_MARKER in (text or "")[:1000]
+
 
 def _looks_like_prose(path, text):
     p = pathlib.Path(path)
@@ -241,7 +257,7 @@ def extract_targets(tool_name, tool_input):
     if tool_name in ("Write",):
         path = tool_input.get("file_path", "")
         text = tool_input.get("content", "")
-        if path and _looks_like_prose(path, text):
+        if path and _looks_like_prose(path, text) and not _is_ignored(path, text):
             return [(path, text, False)]
         return []
     if tool_name in ("Edit", "MultiEdit"):
@@ -252,7 +268,7 @@ def extract_targets(tool_name, tool_input):
             text = pathlib.Path(path).read_text(encoding="utf-8")
         except OSError:
             return []
-        if _looks_like_prose(path, text):
+        if _looks_like_prose(path, text) and not _is_ignored(path, text):
             return [(path, text, False)]
         return []
     if CRAFT_TOOL.search(tool_name):
@@ -348,7 +364,7 @@ def post_tool_use(event):
 Claude Code already showed, and a blocking loop makes the user watch every
 retry. So the reply check never blocks. It scores `last_assistant_message`
 with the full descriptive linter and prints one non-blocking summary
-through `systemMessage`. The pre-send checklist in prompts/system-prompt.md
+through `systemMessage`. The pre-send checklist in rules/core.md
 does the prevention."""
 
 
@@ -487,7 +503,7 @@ def stop(event):
     # --- reply-register note (never blocks) -------------------------------
     # Claude Code already showed the reply and a Stop block cannot hide it,
     # so the reply check only prints a summary. Prevention lives in the
-    # pre-send checklist in prompts/system-prompt.md.
+    # pre-send checklist in rules/core.md.
     problems = _reply_problems(event, lint)
     if problems:
         notes.append("🧠: " + " / ".join(problems) + ".")

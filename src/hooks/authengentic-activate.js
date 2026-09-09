@@ -27,8 +27,8 @@ function candidates(pluginRoot, hookDirectory, relative) {
   return roots.map((root) => path.join(root, ...relative));
 }
 
-function promptCandidates(pluginRoot, hookDirectory) {
-  return candidates(pluginRoot, hookDirectory, ['prompts', 'system-prompt.md']);
+function ruleCandidates(pluginRoot, hookDirectory) {
+  return candidates(pluginRoot, hookDirectory, ['rules', 'core.md']);
 }
 
 function readFirstFile(list) {
@@ -76,7 +76,7 @@ function resolvePluginRoot(env) {
 
 function main() {
   const pluginRoot = resolvePluginRoot(process.env);
-  process.stdout.write(buildContext(readFirstFile(promptCandidates(pluginRoot, __dirname))));
+  process.stdout.write(buildContext(readFirstFile(ruleCandidates(pluginRoot, __dirname))));
 }
 
 if (require.main === module) {
@@ -87,7 +87,7 @@ module.exports = {
   FALLBACK_CONTEXT,
   MAX_CHARS,
   buildContext,
-  promptCandidates,
+  ruleCandidates,
   readFirstFile,
   resolvePluginRoot,
   stripFrontmatter,

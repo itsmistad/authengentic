@@ -3,13 +3,22 @@
 
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const path = require('node:path');
 const {
   FALLBACK_CONTEXT,
   MAX_CHARS,
   buildContext,
+  ruleCandidates,
   resolvePluginRoot,
   stripFrontmatter,
 } = require('./authengentic-activate.js');
+
+test('ruleCandidates tries the plugin root first, then paths from __dirname', () => {
+  const list = ruleCandidates('/plug', '/repo/src/hooks');
+  assert.equal(list[0], path.join('/plug', 'rules', 'core.md'));
+  assert.equal(list[1], path.join('/repo', 'rules', 'core.md'));
+  assert.ok(list.every((p) => p.endsWith(path.join('rules', 'core.md'))));
+});
 
 test('resolvePluginRoot reads PLUGIN_ROOT when Codex sets it', () => {
   assert.equal(resolvePluginRoot({ PLUGIN_ROOT: '/a/b' }), '/a/b');

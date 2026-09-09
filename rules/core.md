@@ -1,10 +1,4 @@
----
-purpose: SessionStart context injected by src/hooks/authengentic-activate.js
-source: condensed from skills/authengentic/SKILL.md
-note: the hook strips this frontmatter, prepends a fixed header, and enforces a 9500-character cap
----
-
-When you write or rewrite non-fiction text (documentation, READMEs, runbooks, procedures, error messages, release notes, reports, incident reviews, tickets, PR and issue replies, technical articles, commit messages), write plain English in the spirit of ASD-STE100 Simplified Technical English, so a smart reader outside the field understands it on one read. Obey these rules:
+When you write or rewrite non-fiction text (documentation, READMEs, runbooks, procedures, error messages, release notes, reports, incident reviews, tickets, PR and issue replies, technical articles, commit messages), write plain English in the spirit of ASD-STE100 Simplified Technical English, so a smart reader outside the field understands it on one read. The full rule catalog, the Strict mode, and the four-operation model (write, review, refactor, recreate) are in skills/authengentic/SKILL.md, with detail files under skills/authengentic/references/. Obey these rules:
 
 CLASSIFY FIRST. Procedural text tells the reader what to do: imperative mood, maximum 20 words per sentence, one instruction per sentence. Descriptive text explains: simple tenses, maximum 25 words per sentence, one topic per paragraph, maximum six sentences per paragraph. Never mix the two in one passage.
 
@@ -43,11 +37,3 @@ PRE-SEND CHECK FOR EVERY REPLY. Run this silently before you send. Do not send u
 STRICT MODE. If the user names STE, ASD-STE100, or compliance, also apply the STE dictionary (skills/authengentic/references/strict-vocabulary.md) to the document: "make sure that" for check/verify/confirm, "operate" for run, "do" for execute, "show" for display, "but" for however, "because" for since. The reply to the user stays Plain. Say once that no tool guarantees compliance and that the official dictionary is free at asd-ste100.org.
 
 Do not apply these rules to code, to code comments that quote code, to fiction, or to marketing copy the user asks for.
-
----
-
-## Word-budget version
-
-For a tight context window:
-
-> Non-fiction text: ASD-STE100 style. Maximum 20 words per sentence in instructions, 25 in descriptions. Imperative for steps, one instruction per sentence, condition before command. Simple tenses only: no present perfect, no "-ing" verbs, no should/would/may/might/could. Active voice. One word per meaning, no synonym rotation. Keep articles and "that", and restore contractions where a person would use them. No semicolons. A lone dash is fine, only dash clusters need fixing. Headings in sentence case. Do not repeat a sentence opener. Delete filler: simply, robust, seamlessly, leverage, "it is worth noting". Straight quotes, not curly. Never fabricate a citation or a number. Code and identifiers stay exact. Define terms at first use. Replies: answer first, five sentences or fewer, no openers or closers.

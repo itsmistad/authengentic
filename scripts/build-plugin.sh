@@ -40,6 +40,7 @@ for f in \
   src/hooks/lint_hook.py \
   evals/authengentic_lint.py \
   evals/slop.tsv \
+  rules/core.md \
   skills/authengentic/SKILL.md \
   output-styles/authengentic.md \
   hooks/hooks.json; do
@@ -48,6 +49,9 @@ for f in \
     exit 1
   fi
 done
+
+echo "==> Checking the generated rule surfaces match rules/core.md"
+node scripts/build-rules.mjs --check
 
 echo "==> Self-testing the canonical linter"
 python3 evals/authengentic_lint.py --self-test

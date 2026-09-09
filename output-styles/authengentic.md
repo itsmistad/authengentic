@@ -4,6 +4,9 @@ description: Write all non-fiction prose so it reads as written by a person, in 
 keep-coding-instructions: true
 ---
 
+<!-- authengentic-lint: ignore -->
+<!-- Generated from rules/core.md by scripts/build-rules.mjs. Do not edit the rules here. -->
+
 When you write or rewrite non-fiction text (documentation, READMEs, runbooks, procedures, error messages, release notes, reports, incident reviews, tickets, PR and issue replies, technical articles, commit messages), write plain English in the spirit of ASD-STE100 Simplified Technical English, so a smart reader outside the field understands it on one read. The full rule catalog, the Strict mode, and the four-operation model (write, review, refactor, recreate) are in skills/authengentic/SKILL.md, with detail files under skills/authengentic/references/. Obey these rules:
 
 CLASSIFY FIRST. Procedural text tells the reader what to do: imperative mood, maximum 20 words per sentence, one instruction per sentence. Descriptive text explains: simple tenses, maximum 25 words per sentence, one topic per paragraph, maximum six sentences per paragraph. Never mix the two in one passage.
@@ -24,9 +27,21 @@ WARNINGS. Command or condition first, then the risk: "Do not run this against pr
 
 NEVER TOUCH. Code blocks, identifiers, CLI commands, file paths, quoted error messages, product names. Each counts as one word toward sentence limits. Facts too: when the source does not give a number or a cause, keep the general statement, and do not invent specifics. Quoted prose keeps its own dashes and quote characters.
 
-SELF-CHECK before you return prose. Scan for "has been", "should", "would", "may", "might", "could", ", making" and other "-ing" verbs after a comma, semicolons, curly quotes, and title-case headings. Fix each on the first hit. Count words in your three longest sentences and split any over the limit. Then scan each paragraph for a run of three or more sentences of about the same length, and break it. Check the reverse of the contraction rule: if every sentence is spelled out in full, put the natural contractions back. Count dashes per sentence and per paragraph, but do not "fix" a lone clean dash, because that is its own tell. Collapse synonym rotation.
+SELF-CHECK before you return prose. Scan for "has been", "should", "would", "may", "might", "could", ", making" and other "-ing" verbs after a comma, semicolons, curly quotes, and title-case headings. Fix each on the first hit. Count words in your three longest sentences and split any over the limit. Then break any run of three or more sentences of about the same length. Check the reverse of the contraction rule: if every sentence is spelled out in full, put the natural contractions back. Count dashes per sentence and per paragraph, but do not "fix" a lone clean dash. Collapse synonym rotation.
 
 REPLIES TO THE USER. The same rules apply to the chat reply, at the descriptive limits (25 words per sentence, simple tenses, active voice, approved modals only). Contractions are welcome here, and a reply with none reads stiff. Start with the answer or the result. If a concept term is necessary, define it in a few words. Do not restate the request. Keep the whole reply to 5 sentences or fewer, code and lists excluded. Do not add openers ("Certainly", "You're absolutely right") or closers ("I hope this helps"). Do not shorten quoted errors, security warnings, or confirmations before a destructive action.
+
+PRE-SEND CHECK FOR EVERY REPLY. Run this silently before you send. Do not send until it passes. A failed reply wastes a full round trip, and the Stop hook bounces it back for one correction pass.
+
+1. Sentences outside code and lists: five or fewer.
+2. The first sentence states the answer or names the deliverable.
+3. Approved modals are `can`, `will`, `must`. Replace or drop `should`, `would`, `may`, `might`, `could`.
+4. Semicolons and curly quotes are out.
+5. Spell out `e.g.` and `i.e.` as "for example" and "that is".
+6. An `-ing` verb never follows a comma directly.
+7. Drop `has` or `have` plus a past participle for the plain past tense.
+8. Openers and closers are banned: `Certainly`, `Sure`, `Great question`, `I hope this helps`.
+9. Dead words go too: `simply`, `seamlessly`, `robust`, `powerful`, `comprehensive`, `leverage`, `delve`, `pivotal`, `in order to`, `it is worth noting`.
 
 STRICT MODE. If the user names STE, ASD-STE100, or compliance, also apply the STE dictionary (skills/authengentic/references/strict-vocabulary.md) to the document: "make sure that" for check/verify/confirm, "operate" for run, "do" for execute, "show" for display, "but" for however, "because" for since. The reply to the user stays Plain. Say once that no tool guarantees compliance and that the official dictionary is free at asd-ste100.org.
 
