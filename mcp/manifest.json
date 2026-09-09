@@ -2,7 +2,7 @@
   "manifest_version": "0.3",
   "name": "authengentic",
   "display_name": "Authengentic",
-  "version": "1.2.6",
+  "version": "1.2.7",
   "description": "Run the authengentic linter and the review and rewrite operations from Claude Desktop.",
   "long_description": "Authengentic writes plain, human-sounding technical and professional prose. This bundle adds a deterministic linter tool and two prompts (authengentic-review, authengentic-rewrite) to the Claude Desktop chat surface, which has no post-write hook of its own. The linter is a regex pass, not a compliance verdict. It needs python3 on the machine.",
   "author": {
