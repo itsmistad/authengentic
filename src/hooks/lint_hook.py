@@ -516,6 +516,11 @@ def stop(event):
         reports = {}
         if lint is not None:
             for key in list(state.get("targets", [])):
+                if not key.startswith(("craft:", "notion:")) and _is_ignored(
+                    key, _current_text(state, key)
+                ):
+                    state["targets"].remove(key)
+                    continue
                 if key not in state["baselines"]:
                     state["baselines"][key] = _baseline_total(
                         lint, key, key.startswith(("craft:", "notion:"))
